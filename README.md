@@ -6,6 +6,12 @@ This repository packages the TeknoParrot tools plugin as its own buildable .NET 
 
 The implementation was built after reviewing [Jumpstile/teknoparrot-manager](https://github.com/Jumpstile/teknoparrot-manager). It does not copy or bundle that repository's source code.
 
+This is a from-scratch C# port, not a fork -- there's no upstream branch to
+merge from. `.github/workflows/watch-upstream.yml` watches that repo's
+`main` branch on a daily schedule and opens a tracking issue here (labeled
+`upstream-sync`) whenever new commits land, so a human can review and
+decide what's worth porting. See ROADMAP.md for what's already ported.
+
 ## What It Does
 
 - Validates TeknoParrot folder structure, `TeknoParrotUi.exe`, `UserProfiles`, `GameProfiles`, and `Icons`.

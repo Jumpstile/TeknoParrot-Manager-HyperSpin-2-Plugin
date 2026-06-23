@@ -1,0 +1,82 @@
+name: Watch teknoparrot-manager for upstream changes
+
+# This repo is a from-scratch C# port of the PowerShell tool at
+# Jumpstile/teknoparrot-manager, not a fork -- there's no branch to merge
+# or rebase from. This workflow just watches that repo's main branch and
+# opens a tracking issue here when new commits land, so a human (or a
+# Claude session) can review and decide what's worth porting.
+
+on:
+  schedule:
+    - cron: "0 13 * * *" # daily, ~9am US Eastern
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: watch-upstream
+  cancel-in-progress: false
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UPSTREAM_REPO: Jumpstile/teknoparrot-manager
+      STATE_FILE: .github/sync-state/teknoparrot-manager.sha
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure tracking label exists
+        run: gh label create upstream-sync --repo "$GITHUB_REPOSITORY" --color BFD4F2 --description "Upstream change in teknoparrot-manager to review for porting" || true
+
+      - name: Compare against last-seen upstream commit
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$STATE_FILE")"
+
+          LATEST_SHA=$(gh api "repos/$UPSTREAM_REPO/commits/main" --jq .sha)
+          LAST_SHA=""
+          if [ -f "$STATE_FILE" ]; then
+            LAST_SHA=$(cat "$STATE_FILE")
+          fi
+
+          if [ -z "$LAST_SHA" ]; then
+            echo "No prior state -- recording current upstream HEAD without opening an issue."
+            echo "$LATEST_SHA" > "$STATE_FILE"
+          elif [ "$LAST_SHA" = "$LATEST_SHA" ]; then
+            echo "No new upstream commits since $LAST_SHA."
+            exit 0
+          else
+            COMMITS=$(gh api "repos/$UPSTREAM_REPO/compare/$LAST_SHA...$LATEST_SHA" --jq '
+              .commits[]
+              | "- [" + (.sha[0:7]) + "](" + .html_url + ") " + (.commit.message | split("\n")[0])
+            ')
+            {
+              echo "New commits landed on [$UPSTREAM_REPO](https://github.com/$UPSTREAM_REPO) since the last check."
+              echo
+              echo "$COMMITS"
+              echo
+              echo "Compare: https://github.com/$UPSTREAM_REPO/compare/$LAST_SHA...$LATEST_SHA"
+              echo
+              echo "Review whether any of these are worth porting into this repo's C# implementation (see ROADMAP.md for what's already ported)."
+            } > issue-body.md
+
+            gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "Upstream changes in teknoparrot-manager ($(echo "$LAST_SHA" | cut -c1-7)...$(echo "$LATEST_SHA" | cut -c1-7))" \
+              --body-file issue-body.md \
+              --label upstream-sync
+
+            echo "$LATEST_SHA" > "$STATE_FILE"
+          fi
+
+          if [ -n "$(git status --porcelain -- "$STATE_FILE")" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "$STATE_FILE"
+            git commit -m "Update teknoparrot-manager sync state to ${LATEST_SHA:0:7}"
+            git push
+          fi
