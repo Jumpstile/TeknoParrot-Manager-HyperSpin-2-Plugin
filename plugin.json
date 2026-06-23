@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -82,23 +82,23 @@
       "key": "teknoparrotRootPath",
       "type": "directory",
       "label": "TeknoParrot Folder",
-      "description": "Folder containing TeknoParrotUi.exe. TeknoParrotUi.exe, UserProfiles, GameProfiles, Icons, and your backup folder are all found automatically from here. Use \"Run Setup Wizard\" if any of those need to be overridden for a non-standard setup.",
+      "description": "The folder where TeknoParrot is installed. Once this is set, the plugin finds everything else it needs on its own.",
       "defaultValue": "",
       "required": false
     },
     {
       "key": "gamesRootPath",
       "type": "directory",
-      "label": "Games Root Folder",
-      "description": "Folder containing your extracted TeknoParrot game folders, used for profile registration and GamePath repair. Not a TeknoParrot subfolder -- this is wherever your games actually live.",
+      "label": "Games Folder",
+      "description": "The folder where your TeknoParrot games are stored. This is NOT your TeknoParrot installation folder -- it's wherever you keep your actual games.",
       "defaultValue": "",
       "required": false
     },
     {
       "key": "eggmanDatPath",
       "type": "file",
-      "label": "Collection Dat File (optional)",
-      "description": "Path to an Eggman/RomVault collection .dat or .zip. Used to disambiguate shared-executable games during registration. Point this at a copy you already have, or use the \"Download Collection Dat\" action to fetch the latest one and paste the resulting path here.",
+      "label": "Collection Dat File (optional, but recommended)",
+      "description": "Helps the plugin recognize a lot of games that it otherwise couldn't. Optional, but recommended. Click \"Download Collection Dat\" on the plugin's Actions page to get this file, then paste its location here. Community-maintained by Eggman -- github.com/Eggmansworld/TeknoParrot.",
       "defaultValue": "",
       "required": false,
       "validation": {
@@ -109,7 +109,7 @@
       "key": "controlOverridesPath",
       "type": "file",
       "label": "Control Overrides File (optional)",
-      "description": "Path to a JSON file for fine-tuning control-binding copying. All fields are optional: \"noPropagate\" (game codes to leave alone), \"forceArchetype\" (game code -> the specific already-bound game to copy from), \"familyOverride\" (game code -> control type, for games detected wrong), \"canonicalArchetype\" (control type -> the already-bound game whose Input API setting is correct, used to fix any other already-bound game of that type that disagrees).",
+      "description": "Advanced. Only needed if you want to manually fine-tune how controls are copied between games. Leave this blank unless a guide told you to use it.",
       "defaultValue": "",
       "required": false,
       "validation": {
@@ -119,8 +119,8 @@
     {
       "key": "minBoundForArchetype",
       "type": "number",
-      "label": "Minimum Bound Buttons To Count As A Reference Game",
-      "description": "A game needs at least this many buttons already bound before the plugin will treat it as a reference game to copy bindings from for other games of the same control type.",
+      "label": "Buttons Needed Before A Game Counts As \"Set Up\"",
+      "description": "How many buttons you need to have configured on a game before the plugin treats it as a finished example to copy from. The default works for most people -- you shouldn't need to change this.",
       "defaultValue": 5,
       "required": false
     },
@@ -128,22 +128,22 @@
       "key": "crosshairsPath",
       "type": "directory",
       "label": "Crosshairs Folder (optional)",
-      "description": "Folder containing PNG crosshair files for lightgun setup. Leave empty to use the 321 crosshairs bundled with this plugin.",
+      "description": "Your own crosshair images for lightgun games. Leave this blank to use the 321 crosshair designs already included with the plugin.",
       "defaultValue": "",
       "required": false
     },
     {
       "key": "downloadMedia",
       "type": "boolean",
-      "label": "Download Media",
-      "description": "Allow HyperHQ to download game logos, artwork, backgrounds, and marquees for imported TeknoParrot games.",
+      "label": "Download Game Artwork",
+      "description": "Let HyperHQ automatically download box art, logos, and backgrounds for your TeknoParrot games.",
       "defaultValue": true
     },
     {
       "key": "autoSyncOnDbConnect",
       "type": "boolean",
-      "label": "Auto Sync on Database Connect",
-      "description": "Automatically sync TeknoParrot profile games when HyperHQ reports the database is ready.",
+      "label": "Auto-Add Games On Startup",
+      "description": "Automatically add your TeknoParrot games to HyperHQ's library every time HyperHQ starts up.",
       "defaultValue": false
     }
   ],
@@ -151,7 +151,7 @@
     {
       "id": "run_setup_wizard",
       "label": "Run Setup Wizard",
-      "description": "Re-launch the TeknoParrot Manager - HyperSpin 2 Plugin setup wizard.",
+      "description": "Run the guided setup again.",
       "icon": "wand",
       "type": "wizard",
       "wizard_id": "teknoparrot-manager-hyperspin2-plugin-setup",
@@ -160,7 +160,7 @@
     {
       "id": "health_check",
       "label": "Health Check",
-      "description": "Validate TeknoParrot paths and profile readiness.",
+      "description": "Check that everything is set up correctly.",
       "icon": "shield-check",
       "type": "secondary",
       "confirmation": false
@@ -168,7 +168,7 @@
     {
       "id": "scan_profiles",
       "label": "Scan Profiles",
-      "description": "Validate configured TeknoParrot UserProfiles XML files.",
+      "description": "Check your TeknoParrot games for any setup problems.",
       "icon": "search",
       "type": "secondary",
       "confirmation": false
@@ -176,7 +176,7 @@
     {
       "id": "preview_registration",
       "label": "Preview Registration",
-      "description": "Dry-run TeknoParrot Manager-style profile registration from GameProfiles and extracted game folders.",
+      "description": "Preview which games can be added, without making any changes yet.",
       "icon": "eye",
       "type": "secondary",
       "confirmation": false
@@ -184,7 +184,7 @@
     {
       "id": "check_eggman_dat_update",
       "label": "Check Collection Dat For Updates",
-      "description": "Check whether a newer Eggmansworld/TeknoParrot collection dat release is available on GitHub, without downloading anything.",
+      "description": "See if a newer Collection Dat file is available, without downloading anything yet. Optional, but recommended -- it helps a lot of games get set up correctly.",
       "icon": "refresh-cw",
       "type": "secondary",
       "confirmation": false
@@ -192,34 +192,34 @@
     {
       "id": "download_eggman_dat",
       "label": "Download Collection Dat",
-      "description": "Download the latest Eggmansworld/TeknoParrot collection dat ZIP (roughly 100-150 MB) used to resolve shared-executable registration matches.",
+      "description": "Download the Collection Dat file, which helps the plugin recognize a lot of games during setup that it otherwise couldn't. Optional, but highly recommended. This file is community-maintained by Eggman (github.com/Eggmansworld/TeknoParrot) -- credit to them for keeping it up to date.",
       "icon": "download",
       "type": "secondary",
       "confirmation": true,
-      "confirmationMessage": "This downloads a community-maintained collection dat ZIP (roughly 100-150 MB) from Eggmansworld/TeknoParrot's GitHub releases into this plugin's own folder. It is only used to help match games during registration and is never executed. After it finishes, paste the reported path into the \"Collection Dat File\" setting to start using it. Continue?"
+      "confirmationMessage": "This downloads a file (roughly 100-150 MB) that helps the plugin recognize a lot of games it otherwise couldn't. It's just data, used only to help with game setup -- nothing is installed or run. It's community-maintained by Eggman (github.com/Eggmansworld/TeknoParrot). Once it's done, copy the path it gives you into the \"Collection Dat File\" setting. Continue?"
     },
     {
       "id": "register_games",
       "label": "Register Profiles",
-      "description": "Create missing UserProfiles XMLs from matching GameProfiles without overwriting existing profiles.",
+      "description": "Add any games that are missing from TeknoParrot. Your existing games are never changed.",
       "icon": "plus-circle",
       "type": "primary",
       "confirmation": true,
-      "confirmationMessage": "This will create missing UserProfiles XML files from GameProfiles and your games root folder. Existing profiles are backed up and not overwritten. Continue?"
+      "confirmationMessage": "This will add any missing games to TeknoParrot. Your existing games won't be touched, and everything is backed up first. Continue?"
     },
     {
       "id": "repair_game_paths",
       "label": "Repair Game Paths",
-      "description": "Repair broken or empty GamePath values when a unique executable match is found.",
+      "description": "Fix games that can't find their program file, when there's a clear, safe fix.",
       "icon": "wrench",
       "type": "secondary",
       "confirmation": true,
-      "confirmationMessage": "This will update broken or empty GamePath values when a unique safe match is found. Existing profiles are backed up first. Continue?"
+      "confirmationMessage": "This will fix any broken game locations it can safely identify. Everything is backed up first. Continue?"
     },
     {
       "id": "device_survey",
       "label": "Device Survey",
-      "description": "Answer a few questions about your controls to get a recommended binding plan. Read-only: changes nothing.",
+      "description": "Get a recommendation on which controller, lightgun, or wheel to use for each type of game. Doesn't change anything.",
       "icon": "gamepad",
       "type": "secondary",
       "confirmation": false
@@ -227,7 +227,7 @@
     {
       "id": "preview_control_propagation",
       "label": "Preview: Copy Controls To Other Games",
-      "description": "Shows what would happen if you copy button bindings from games you've already set up to other games of the same type (driving, lightgun, etc.) -- nothing is changed.",
+      "description": "Preview which games would get their controls copied from a game you've already set up. Nothing is changed yet.",
       "icon": "eye",
       "type": "secondary",
       "confirmation": false
@@ -235,16 +235,16 @@
     {
       "id": "propagate_controls",
       "label": "Copy Controls To Other Games",
-      "description": "Copies button bindings from a game you've already bound to every other unbound game of the same type, matched button-by-button. The game you copy from is never changed.",
+      "description": "Copies your controller setup from a game you've already configured to every other similar game. The original game is never changed.",
       "icon": "gamepad",
       "type": "primary",
       "confirmation": true,
-      "confirmationMessage": "This will copy button bindings from games you've already bound to other unbound games of the same type. Existing profiles are backed up first. Continue?"
+      "confirmationMessage": "This will copy your control setup to other similar games that aren't set up yet. Everything is backed up first. Continue?"
     },
     {
       "id": "preview_crosshairs",
       "label": "Preview Crosshairs",
-      "description": "Generate an HTML preview grid of all available crosshair PNGs (bundled, or from crosshairsPath if set).",
+      "description": "Open a page in your browser to look at all the available crosshair designs.",
       "icon": "eye",
       "type": "secondary",
       "confirmation": false
@@ -252,25 +252,25 @@
     {
       "id": "deploy_crosshairs",
       "label": "Deploy Crosshairs",
-      "description": "Copy the chosen P1/P2 crosshair PNGs to every registered lightgun game, with optional cursor hiding.",
+      "description": "Install your chosen crosshair images to all your lightgun games.",
       "icon": "crosshair",
       "type": "primary",
       "confirmation": true,
-      "confirmationMessage": "This will copy the chosen crosshair images into every registered lightgun game's folder (and PCSX2.ini, for PCSX2 lightgun games). Continue?"
+      "confirmationMessage": "This will install your chosen crosshair images to every lightgun game. Continue?"
     },
     {
       "id": "hide_cursor",
       "label": "Hide Cursor For Lightgun Games",
-      "description": "Sets the cursor-hide field in every registered lightgun profile. Existing profiles are backed up first.",
+      "description": "Hide the mouse pointer while playing lightgun games.",
       "icon": "mouse-off",
       "type": "secondary",
       "confirmation": true,
-      "confirmationMessage": "This will hide the Windows cursor for every registered lightgun game that supports it. Existing profiles are backed up first. Continue?"
+      "confirmationMessage": "This will hide your mouse pointer during lightgun games that support it. Everything is backed up first. Continue?"
     },
     {
       "id": "preview_sync",
       "label": "Preview Import",
-      "description": "Build a dry-run HyperHQ import payload without changing the database.",
+      "description": "Preview what will be added to your HyperHQ library, without changing anything yet.",
       "icon": "eye",
       "type": "secondary",
       "confirmation": false
@@ -278,16 +278,16 @@
     {
       "id": "sync_games",
       "label": "Sync Games",
-      "description": "Create Arcade (TeknoParrot), link TeknoParrot, and import configured profile XMLs.",
+      "description": "Add your TeknoParrot games to your HyperHQ library.",
       "icon": "sync",
       "type": "primary",
       "confirmation": true,
-      "confirmationMessage": "This will create or update Arcade (TeknoParrot), link the TeknoParrot launcher, and import configured profile XMLs. Continue?"
+      "confirmationMessage": "This will add your TeknoParrot games to your HyperHQ library. Continue?"
     },
     {
       "id": "backup_profiles",
       "label": "Backup Profiles",
-      "description": "Create a timestamped backup of UserProfiles XML files.",
+      "description": "Save a backup copy of your TeknoParrot games right now.",
       "icon": "archive",
       "type": "secondary",
       "confirmation": false
@@ -295,16 +295,16 @@
     {
       "id": "restore_backup",
       "label": "Restore Backup",
-      "description": "Restore UserProfiles XML files from a selected backup folder.",
+      "description": "Bring back a previous backup of your TeknoParrot games.",
       "icon": "rotate-ccw",
       "type": "secondary",
       "confirmation": true,
-      "confirmationMessage": "This will restore UserProfiles XML files from the selected backup and create a pre-restore backup first. Continue?"
+      "confirmationMessage": "This will replace your current games with the backup you choose. Your current setup is backed up first, just in case. Continue?"
     },
     {
       "id": "get_status",
       "label": "Get Status",
-      "description": "Report TeknoParrot path, profile, and system readiness.",
+      "description": "Show a quick summary of your TeknoParrot setup.",
       "icon": "info",
       "type": "secondary",
       "confirmation": false
@@ -352,7 +352,7 @@
           {
             "id": "paths",
             "title": "TeknoParrot Paths",
-            "description": "Point at your TeknoParrot folder. TeknoParrotUi.exe, UserProfiles, GameProfiles, and Icons are all found automatically from there -- you only need to fill in the fields below it if your setup is non-standard.",
+            "description": "Point at your TeknoParrot folder. Everything else below is found automatically from there -- you only need to fill in the rest if TeknoParrot is installed somewhere unusual.",
             "type": "form",
             "buttonText": "Validate paths",
             "executeOnNext": true,
@@ -384,9 +384,9 @@
               {
                 "key": "eggmanDatPath",
                 "type": "file",
-                "label": "Collection Dat File (advanced)",
+                "label": "Collection Dat File (optional, but recommended)",
                 "placeholder": "C:\\TeknoParrot\\Eggman\\collection.dat",
-                "helpText": "Optional. Point at a collection .dat or .zip to help registration resolve shared-executable games, or use \"Download Collection Dat\" from the plugin page to fetch the latest one.",
+                "helpText": "Optional, but recommended -- helps the plugin recognize a lot of games it otherwise couldn't. Use \"Download Collection Dat\" from the plugin's Actions page to get this file. Community-maintained by Eggman -- github.com/Eggmansworld/TeknoParrot.",
                 "required": false,
                 "validation": {
                   "fileTypes": [".dat", ".zip"]

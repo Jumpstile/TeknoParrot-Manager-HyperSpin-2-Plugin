@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.1
   Author: Jumpstile
 ===============================================================================
 
@@ -47,11 +47,12 @@
   - Fuzzy and dat-assisted matching. For games that share one executable
     across many titles, folder names are compared to candidate profile
     codes and the best match is used when the confidence is high enough.
-    An optional collection dat file (Eggman/RomVault) can resolve trickier
-    cases the same way the original PowerShell tool does. The plugin can
-    check for and download the latest collection dat for you ("Check
-    Collection Dat For Updates" / "Download Collection Dat") -- it's only
-    ever read, never run or installed.
+    An optional, but highly recommended, "Collection Dat" file can resolve
+    a lot of games this plugin otherwise couldn't tell apart. The plugin
+    can check for and download the latest one for you ("Check Collection
+    Dat For Updates" / "Download Collection Dat") -- it's only ever read,
+    never run or installed. This file is community-maintained by Eggman
+    -- see CREDITS below.
 
   - Game path repair. Finds broken or empty game paths and repoints them
     to the right executable, but only when there is exactly one possible
@@ -260,6 +261,17 @@
     you about it rather than guessing.
   - See CHANGELOG.txt for what changed in this version.
   - See QUICKSTART.txt for a step-by-step setup walkthrough.
+
+
+-------------------------------------------------------------------------------
+  CREDITS
+-------------------------------------------------------------------------------
+
+  - The Collection Dat file (used to help recognize games during setup,
+    and downloadable directly from this plugin) is community-maintained
+    by Eggman:  https://github.com/Eggmansworld/TeknoParrot
+    This plugin does not create or maintain that data -- it only
+    downloads and reads it.
 
 
 ===============================================================================

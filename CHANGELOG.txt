@@ -7,6 +7,22 @@
 
 
 -------------------------------------------------------------------------------
+  v0.8.1
+-------------------------------------------------------------------------------
+
+  Simplified the wording on every setting and button in the plugin --
+  plainer language, no technical terms, easier to understand if you're
+  not familiar with TeknoParrot's internals.
+
+  The Collection Dat file is now marked "optional, but recommended" --
+  it resolves a lot of games this plugin otherwise couldn't, so most
+  people will get noticeably better results with it.
+
+  Added credit to Eggman for maintaining the Collection Dat file:
+  https://github.com/Eggmansworld/TeknoParrot
+
+
+-------------------------------------------------------------------------------
   v0.8.0
 -------------------------------------------------------------------------------
 

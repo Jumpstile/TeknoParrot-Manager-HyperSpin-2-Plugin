@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.1  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -75,11 +75,13 @@
      it is with confidence -- set that one up by hand in TeknoParrot.
 
 
-  COLLECTION DAT FILE (OPTIONAL, HELPS WITH TRICKY GAMES)
+  COLLECTION DAT FILE (OPTIONAL, BUT HIGHLY RECOMMENDED)
   ----------------------------------------------------------
   Some games share one program file across dozens of unrelated titles
-  (common on a few platforms). A community-maintained "collection dat"
-  file can resolve these automatically during registration.
+  (common on a few platforms), and the plugin can't always tell them
+  apart on its own. The "Collection Dat" file resolves a lot of these
+  automatically during registration -- most people will get noticeably
+  better results with it.
 
   1. Click "Check Collection Dat For Updates" to see if a newer one is
      available, without downloading anything.
@@ -89,7 +91,8 @@
   4. Re-run "Preview Registration" -- previously unmatched games may now
      resolve automatically.
 
-  This file is only ever read, never run or installed.
+  This file is only ever read, never run or installed. It is community-
+  maintained by Eggman: https://github.com/Eggmansworld/TeknoParrot
 
 
   FIX BROKEN GAME PATHS (IF NEEDED)
