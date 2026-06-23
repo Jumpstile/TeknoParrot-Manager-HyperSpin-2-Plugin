@@ -1,6 +1,6 @@
 # TeknoParrot Manager HyperSpin 2 Plugin
 
-<img src="icon.jpg" alt="TeknoParrot Tools" width="160">
+![TeknoParrot Tools](banner.jpg)
 
 Standalone HyperSpin 2 / HyperHQ plugin for TeknoParrot profile maintenance and HyperHQ import.
 
@@ -55,6 +55,7 @@ That boundary is deliberate. HyperHQ should remain the launcher and library mana
 |-- TeknoParrotHyperHQPlugin.sln
 |-- plugin.json
 |-- icon.jpg
+|-- banner.jpg
 |-- CHANGELOG.md
 |-- src/
 |   |-- TeknoParrotToolsPlugin/
@@ -72,7 +73,7 @@ That boundary is deliberate. HyperHQ should remain the launcher and library mana
         `-- TeknoParrotProfileScannerTests.cs
 ```
 
-The `src` folder contains all buildable plugin source. `src/HyperHQPluginCommon` contains the small HyperHQ plugin transport/import contract needed to run this project as a standalone repository.
+The `src` folder contains all buildable plugin source. `src/HyperHQPluginCommon` contains the small HyperHQ plugin transport/import contract needed to run this project as a standalone repository. `banner.jpg` is repo/wiki decoration only (used at the top of this README) -- it is not part of the release package; `icon.jpg` is the plugin icon HyperHQ actually uses, and is the one bundled into release ZIPs.
 
 ## Build And Test
 
