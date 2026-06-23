@@ -7,6 +7,18 @@
 
 
 -------------------------------------------------------------------------------
+  v0.11.1
+-------------------------------------------------------------------------------
+
+  Fixed a registration accuracy issue: when two different games could
+  both plausibly match the same extracted folder, the plugin could
+  occasionally pick the wrong one instead of asking you to confirm. Now,
+  if two matches are too close to call, the plugin no longer guesses --
+  it leaves that game for you to register by hand instead, the same way
+  it already does for any other unclear match.
+
+
+-------------------------------------------------------------------------------
   v0.11.0
 -------------------------------------------------------------------------------
 

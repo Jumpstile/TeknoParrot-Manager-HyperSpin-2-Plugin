@@ -15,7 +15,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.11.0";
+    internal const string PluginVersion = "0.11.1";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -1364,6 +1364,20 @@ public sealed class TeknoParrotScanResult
 public static partial class TeknoParrotProfileScanner
 {
     private const double FuzzyAutoThreshold = 0.72;
+
+    // Minimum score gap required between the best and runner-up candidate
+    // for the best one to be trusted as an auto-register decision. Without
+    // this, two different profiles that both happen to score at or above
+    // FuzzyAutoThreshold against the same folder name were resolved purely
+    // by which one the candidate loop iterated to last -- no actual signal
+    // preferred one over the other. Set to 0.1 (not a tighter value like
+    // 0.05) per the original PowerShell tool's own audit: a real near-miss
+    // example (a folder one character off from the real title vs. one
+    // character over) produced a gap of ~0.083, which a tighter margin
+    // would not have caught. Ported from teknoparrot-manager v0.99.19,
+    // issue #15.
+    private const double FuzzyTieMargin = 0.1;
+
     private static readonly string[] GameFileExtensions = { ".exe", ".elf", ".iso", ".gcm", ".gcz", ".bin", ".e4", ".zip", ".xbe", ".dll" };
 
     public static TeknoParrotScanResult Scan(TeknoParrotSettings settings)
@@ -2050,7 +2064,7 @@ public static partial class TeknoParrotProfileScanner
         return (templates.First(template => string.Equals(template.Code, selected.Code, StringComparison.OrdinalIgnoreCase)), selected.Code, selected.Score, "fuzzy");
     }
 
-    private static (string? Code, double Score) SelectProfileCodeByFolderName(string folderName, IEnumerable<string> profileCodes)
+    internal static (string? Code, double Score) SelectProfileCodeByFolderName(string folderName, IEnumerable<string> profileCodes)
     {
         var normalizedFolder = NormalizeGameKey(StripGameFolderSuffix(folderName));
         if (normalizedFolder.Length < 2)
@@ -2060,17 +2074,27 @@ public static partial class TeknoParrotProfileScanner
 
         string? bestCode = null;
         var bestScore = 0.0;
+        var secondScore = 0.0;
         foreach (var code in profileCodes)
         {
             var score = GetDiceSimilarity(normalizedFolder, NormalizeGameKey(code));
             if (score > bestScore)
             {
+                secondScore = bestScore;
                 bestScore = score;
                 bestCode = code;
             }
+            else if (score > secondScore)
+            {
+                secondScore = score;
+            }
         }
 
-        return bestScore >= FuzzyAutoThreshold ? (bestCode, bestScore) : (null, bestScore);
+        // A near-tie with the runner-up means no real signal preferred this
+        // candidate over the other -- treat it the same as "below threshold"
+        // rather than guessing. See FuzzyTieMargin.
+        var isTooCloseToCall = secondScore > 0 && (bestScore - secondScore) < FuzzyTieMargin;
+        return bestScore >= FuzzyAutoThreshold && !isTooCloseToCall ? (bestCode, bestScore) : (null, bestScore);
     }
 
     private static IEnumerable<string> GetGameFiles(string folder)

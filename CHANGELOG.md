@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.11.0
+## 0.11.1
+
+- Fix: shared-executable fuzzy registration matching (`SelectProfileCodeByFolderName`) could auto-register a folder against the wrong profile when two candidate codes both scored at or above the auto-register threshold and were within a hair of each other -- the winner was decided purely by which one the candidate loop happened to iterate to last, not by any real signal preferring one over the other. Ported from upstream `teknoparrot-manager` v0.99.19 (issue #15): now requires the best candidate to lead the runner-up by at least 0.1 (`FuzzyTieMargin`) before trusting it; a near-tie is treated the same as "below threshold" and falls through to manual registration (`shared-executable` ambiguous, same as today) instead of guessing. Found by checking the upstream repo for changes since the last sync, not from a user report.
+- 3 new tests (100/100 passing), including a real measured near-tie case (not hand-picked to merely look plausible) and a regression check that a clear, unambiguous winner still auto-registers.
 
 - Add dgVoodoo2 setup (ROADMAP.md Phase 5), porting the original PowerShell tool's `Invoke-DgVoodoo2Setup`/`Get-GameLegacyApi`/`Test-DgVoodoo2UpToDate`. Two new actions: `preview_dgvoodoo2_setup` (dry-run) and `apply_dgvoodoo2_setup`. The DLLs are user-supplied via `dgVoodoo2SourcePath` (same "user already has it" pattern as `crosshairsPath`/`reShadeSourceDllPath`) -- this plugin does not download dgVoodoo2. Zero network calls in this phase, so no new permission entry was needed.
 - Detects each game's legacy graphics API usage (DirectX 8, DirectDraw, Glide 2x/3x) by scanning the exe for known DLL imports, then deploys only the DLL(s) that API actually needs (falling back to every available DLL if none of the needed ones are present in the source folder). Existing deployed DLLs are never overwritten.

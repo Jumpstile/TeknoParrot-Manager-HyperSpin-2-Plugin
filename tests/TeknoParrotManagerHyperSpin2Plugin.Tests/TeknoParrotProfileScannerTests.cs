@@ -112,6 +112,48 @@ public class TeknoParrotProfileScannerTests
         Assert.Equal(executable, registered.GamePath);
     }
 
+    // Ported from teknoparrot-manager v0.99.19 (issue #15): two candidates
+    // that both score at or above the auto-register threshold against the
+    // same folder name must not be resolved by which one the loop happened
+    // to iterate to last. "DaytonaChampionship" and
+    // "DaytonaChampionshipUSADX" both score within FuzzyTieMargin (0.1) of
+    // each other against "DaytonaChampionshipUSA" (best ~0.95) -- real
+    // values measured against this exact implementation, not hand-picked
+    // to merely look plausible.
+    [Fact]
+    public void SelectProfileCodeByFolderName_rejects_a_near_tie_between_two_strong_candidates()
+    {
+        var result = TeknoParrotProfileScanner.SelectProfileCodeByFolderName(
+            "DaytonaChampionshipUSA", new[] { "DaytonaChampionship", "DaytonaChampionshipUSADX" });
+
+        Assert.Null(result.Code);
+    }
+
+    [Fact]
+    public void SelectProfileCodeByFolderName_still_auto_registers_a_clear_unambiguous_winner()
+    {
+        var result = TeknoParrotProfileScanner.SelectProfileCodeByFolderName(
+            "InitialD8", new[] { "InitialD8", "InitialD7" });
+
+        Assert.Equal("InitialD8", result.Code);
+    }
+
+    [Fact]
+    public void RegisterGames_reports_shared_executable_ambiguous_instead_of_guessing_a_near_tie()
+    {
+        using var fixture = new TeknoParrotFixture();
+        fixture.WriteGameExecutable("DaytonaChampionshipUSA", "game.exe");
+        fixture.WriteProfileTemplate("DaytonaChampionship", "Daytona Championship", "game.exe");
+        fixture.WriteProfileTemplate("DaytonaChampionshipUSADX", "Daytona Championship USA DX", "game.exe");
+
+        var result = TeknoParrotProfileScanner.RegisterGames(fixture.Settings, dryRun: false);
+
+        Assert.True(result.Success);
+        Assert.Empty(result.Registered);
+        var ambiguous = Assert.Single(result.Ambiguous);
+        Assert.Equal("shared-executable", ambiguous.Reason);
+    }
+
     [Fact]
     public void RegisterGames_uses_dat_index_when_folder_name_does_not_fuzzy_match_any_template()
     {
