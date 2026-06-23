@@ -7,6 +7,26 @@
 
 
 -------------------------------------------------------------------------------
+  v0.9.0
+-------------------------------------------------------------------------------
+
+  Added a GPU compatibility fix. The plugin detects your graphics card
+  (AMD, NVIDIA, or Intel) and automatically applies the matching fix
+  setting to every game that supports one -- no more digging through
+  TeknoParrotUI to flip these one game at a time.
+
+  Two new buttons:
+
+    Preview GPU Fix   -- shows which games would be changed, without
+                         changing anything yet.
+
+    Apply GPU Fix     -- applies the fix. Everything is backed up first.
+
+  This works entirely on your own computer -- no internet connection is
+  used or needed for this feature.
+
+
+-------------------------------------------------------------------------------
   v0.8.1
 -------------------------------------------------------------------------------
 

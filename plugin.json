@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -266,6 +266,23 @@
       "type": "secondary",
       "confirmation": true,
       "confirmationMessage": "This will hide your mouse pointer during lightgun games that support it. Everything is backed up first. Continue?"
+    },
+    {
+      "id": "preview_gpu_fix",
+      "label": "Preview GPU Fix",
+      "description": "See which games would get a graphics card fix applied, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_gpu_fix",
+      "label": "Apply GPU Fix",
+      "description": "Automatically detects your graphics card and applies the matching fix to every game that supports one.",
+      "icon": "cpu",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This will apply a graphics card compatibility fix to every game that supports one, based on your detected (or chosen) GPU brand. Everything is backed up first. Continue?"
     },
     {
       "id": "preview_sync",

@@ -14,7 +14,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.8.1";
+    internal const string PluginVersion = "0.9.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -343,6 +343,71 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { result, backup_path = backup?.BackupPath };
     }
 
+    // Resolves the GPU vendor to use for GpuFix: an explicit "vendor"
+    // override in the action payload takes precedence, otherwise auto-detect
+    // via WMI (Windows-only; returns null off-Windows or if detection
+    // fails). Returns an error response in place of a vendor when neither
+    // source produces one, or when an override doesn't match a known
+    // vendor name -- this plugin never guesses a GPU vendor.
+    private static (string? Vendor, GpuVendorDetection? Detection, object? Error) ResolveGpuVendor(JsonElement data)
+    {
+        var vendorOverride = GetString(data, "vendor");
+        if (!string.IsNullOrWhiteSpace(vendorOverride))
+        {
+            if (vendorOverride is not ("AMD" or "NVIDIA" or "Intel"))
+            {
+                return (null, null, new { success = false, error = $"Unrecognized vendor '{vendorOverride}'. Use AMD, NVIDIA, or Intel." });
+            }
+
+            return (vendorOverride, null, null);
+        }
+
+        var detection = TeknoParrotProfileScanner.DetectGpuVendor(LogAsyncSink);
+        if (string.IsNullOrWhiteSpace(detection.Vendor))
+        {
+            return (null, detection, new
+            {
+                success = false,
+                error = "Could not auto-detect your GPU vendor. Pass \"vendor\": \"AMD\", \"NVIDIA\", or \"Intel\" explicitly.",
+                detected_name = detection.Name
+            });
+        }
+
+        return (detection.Vendor, detection, null);
+    }
+
+    private static object PreviewGpuFix(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var (vendor, detection, error) = ResolveGpuVendor(data);
+        if (vendor is null)
+        {
+            return error!;
+        }
+
+        var result = TeknoParrotProfileScanner.ApplyGpuFix(settings, vendor, dryRun: true, LogAsyncSink);
+        return new { success = true, result, detected_name = detection?.Name };
+    }
+
+    private static object ApplyGpuFix(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var (vendor, detection, error) = ResolveGpuVendor(data);
+        if (vendor is null)
+        {
+            return error!;
+        }
+
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = TeknoParrotProfileScanner.ApplyGpuFix(settings, vendor, dryRun: false, LogAsyncSink);
+        return new { success = true, result, detected_name = detection?.Name, backup_path = backup?.BackupPath };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -380,6 +445,8 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "preview_crosshairs" => PreviewCrosshairs(data),
             "deploy_crosshairs" => DeployCrosshairs(data),
             "hide_cursor" => HideCursor(data),
+            "preview_gpu_fix" => PreviewGpuFix(data),
+            "apply_gpu_fix" => ApplyGpuFix(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),

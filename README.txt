@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.1
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.0
   Author: Jumpstile
 ===============================================================================
 
@@ -73,6 +73,11 @@
     pair to every registered lightgun game. 321 ready-made designs are
     included, and you can browse them all in a preview page before
     picking. Can also hide the Windows mouse cursor during lightgun play.
+
+  - GPU compatibility fix. Detects your graphics card (AMD, NVIDIA, or
+    Intel) and automatically applies the matching fix setting to every
+    game that supports one. Works entirely on your own computer -- no
+    internet connection used or needed.
 
   - Backup and restore. Backs up your game profiles before any risky
     change, and lets you restore an earlier backup -- with a safety
@@ -191,6 +196,29 @@
        during lightgun play.
 
   Run this again any time to change your crosshair design.
+
+
+-------------------------------------------------------------------------------
+  GPU COMPATIBILITY FIX
+-------------------------------------------------------------------------------
+
+  Some games run better, or only run correctly, with a setting matched to
+  your specific graphics card brand. This automatically finds and applies
+  that setting for every game that has one.
+
+  How to use it:
+
+    1. Click "Preview GPU Fix" to see which games would be changed,
+       without changing anything yet. The plugin detects your graphics
+       card automatically.
+    2. Click "Apply GPU Fix" to apply it. Everything is backed up first.
+
+  If the plugin can't detect your graphics card automatically (uncommon),
+  you can tell it which one you have when running the action.
+
+  Safe to run again any time you change or update your graphics card.
+  This feature never uses the internet -- everything happens on your own
+  computer.
 
 
 -------------------------------------------------------------------------------

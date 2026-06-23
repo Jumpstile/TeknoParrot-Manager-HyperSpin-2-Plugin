@@ -114,7 +114,7 @@ Port `Invoke-DgVoodoo2Setup` + `Test-DgVoodoo2UpToDate` (tpm.ps1:1578,
 user-supplied via a settings path (`dgVoodoo2SourceDir`); no network
 calls anywhere in this phase.
 
-### Phase 6 -- GPU compatibility fix (Group A, despite the numbering -- corrected)
+### Phase 6 -- GPU compatibility fix (Group A, despite the numbering -- corrected) -- DONE (v0.9.0)
 Port `Invoke-GpuFixSetup` + `Get-DetectedGpuVendor` +
 `Get-GpuFixFieldNames`/`Test-GpuFixUpToDate` (tpm.ps1:2111, 1798, 1827,
 1932). Auto-detects AMD/NVIDIA/Intel via a local WMI query
@@ -122,9 +122,14 @@ Port `Invoke-GpuFixSetup` + `Get-DetectedGpuVendor` +
 field fix -- pure XML field toggling, same category as cursor-hide.
 Originally miscategorized as Group B in this file; verified against the
 source and corrected. No third-party binary involved, no permission
-boundary blocker -- this phase doesn't actually need to wait for the
-Group B decision and could be pulled forward ahead of Phase 4/5 if
-useful.
+boundary blocker -- pulled forward ahead of Phase 4/5 as planned. Field
+names are discovered from `GameProfiles` at runtime (seeded with the
+original tool's fallback list, extended with whatever else is found).
+`System.Management` added as the project's first NuGet dependency for the
+WMI query; guarded with `OperatingSystem.IsWindows()` since the project
+also targets `linux-x64` (detection no-ops to "undetected" there, same as
+any other GPU-detection failure -- the caller can still pass an explicit
+vendor override).
 
 ### Phase 7 -- Force feedback (Group B)
 Port `Invoke-FFBBlasterSetup` + `Invoke-FFBPluginSetup` +

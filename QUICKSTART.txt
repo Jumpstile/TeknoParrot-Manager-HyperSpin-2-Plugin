@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.1  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -138,6 +138,18 @@
      lightgun play.
 
   Run this again any time to change your crosshair design.
+
+
+  FIX GRAPHICS CARD ISSUES (OPTIONAL)
+  --------------------------------------
+  Some games need a setting matched to your graphics card brand to run
+  correctly. The plugin can detect your card and apply this automatically.
+
+  1. Click "Preview GPU Fix" to see which games would be changed.
+  2. Click "Apply GPU Fix" to apply it. Everything is backed up first.
+
+  Safe to run again any time you change or update your graphics card.
+  Doesn't use the internet -- everything happens on your computer.
 
 
   ADD YOUR GAMES TO HYPERHQ

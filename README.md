@@ -26,6 +26,7 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - Offers a read-only device survey that recommends which control to bind for each game type based on what devices you have.
 - Deploys a chosen pair of P1/P2 crosshair images (321 bundled, or your own via `crosshairsPath`) to every registered lightgun game, including ElfLdr2 and PCSX2 (with `PCSX2.ini` `cursor_path` updates) special cases, and generates an HTML preview grid to browse them.
 - Hides the Windows cursor for every registered lightgun game that defines a cursor-hide field.
+- Detects your GPU vendor (AMD/NVIDIA/Intel) via a local WMI query and applies the matching compatibility fix field to every registered profile that has one (`preview_gpu_fix` / `apply_gpu_fix`). Pure local detection plus profile XML edits -- no network calls.
 - Backs up and restores profile XML files, including a pre-restore backup before overwrite.
 - Creates and syncs the canonical HyperHQ system `Arcade (TeknoParrot)`.
 - Imports TeknoParrot profile XML files as launchable HyperHQ games.
@@ -35,8 +36,8 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 
 TeknoParrot Manager includes many broader Windows setup and game-modification workflows. This plugin intentionally keeps the HyperHQ surface narrower:
 
-- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
-- Not included yet: ReShade installation, dgVoodoo2 setup, GPU fixes, FFB setup, Postgres setup, and BepInEx deployment. See ROADMAP.md.
+- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, GPU compatibility fix, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
+- Not included yet: ReShade installation, dgVoodoo2 setup, FFB setup, Postgres setup, and BepInEx deployment. See ROADMAP.md.
 
 That boundary is deliberate. HyperHQ should remain the launcher and library manager, while the plugin extends TeknoParrot support where HyperHQ needs structured profile and import behavior.
 
@@ -167,6 +168,8 @@ Supported execute actions:
 - `preview_crosshairs`
 - `deploy_crosshairs`
 - `hide_cursor`
+- `preview_gpu_fix`
+- `apply_gpu_fix`
 - `preview_sync`
 - `sync_games`
 - `backup_profiles`

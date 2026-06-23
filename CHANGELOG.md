@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0
+
+- Add GPU compatibility fix (ROADMAP.md Phase 6), porting the original PowerShell tool's `Get-DetectedGpuVendor`/`Get-GpuFixFieldNames`/`Test-GpuFixUpToDate`/`Invoke-GpuFixSetup`. Two new actions: `preview_gpu_fix` (dry-run) and `apply_gpu_fix`. Auto-detects your GPU vendor (AMD/NVIDIA/Intel) via a local WMI query (`Win32_VideoController`, Windows-only -- no-ops to "undetected" on Linux) and toggles the matching vendor-fix field in every registered profile that has one. Field names are discovered by scanning `GameProfiles` at runtime (seeded with the original tool's known field names, extended with whatever else is found), so newly added games with new fix fields are covered without a plugin update. Pure local WMI detection plus profile XML field edits -- no network calls, no new `plugin.json` permission needed (Group A per ROADMAP.md). An explicit `vendor` override can be passed in the action payload for when auto-detection fails or isn't on Windows; the plugin never guesses a vendor on its own.
+- `System.Management` added as a new NuGet dependency (first one this project has needed) for the WMI query above.
+
 ## 0.8.1
 
 - Simplify the wording on every plugin Settings field and Action (label/description/confirmation text) for a non-technical audience -- no more JSON key names or internal terminology (e.g. `controlOverridesPath`'s description used to enumerate `noPropagate`/`forceArchetype`/`familyOverride`/`canonicalArchetype` directly; now it's a one-line "advanced, leave blank unless a guide told you to use it"). Behavior, setting keys, and action ids are all unchanged -- text only.
