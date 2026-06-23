@@ -52,9 +52,9 @@
   ---------------------
   1. Open the plugin's page inside HyperHQ.
   2. Click "Run Setup Wizard".
-  3. Click Browse and point it at your TeknoParrot folder (the one
-     containing TeknoParrotUi.exe) -- the wizard checks it and fills in
-     the rest of the paths automatically.
+  3. Point it at your TeknoParrot folder (the one containing
+     TeknoParrotUi.exe) -- the wizard checks it and fills in the rest of
+     the paths automatically.
   4. Follow the remaining steps. Each one explains what it's asking for in
      plain language.
 

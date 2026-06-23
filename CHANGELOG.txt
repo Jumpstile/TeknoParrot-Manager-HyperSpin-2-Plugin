@@ -21,10 +21,6 @@
   of those at a different location, you can still do that from "Run
   Setup Wizard" -> TeknoParrot Paths.
 
-  Every folder and file field now opens a proper Browse dialog instead of
-  needing you to type or paste a path by hand -- this applies to both the
-  Settings screen and the setup wizard.
-
 
 -------------------------------------------------------------------------------
   v0.6.0
