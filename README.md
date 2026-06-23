@@ -20,6 +20,7 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - Scans `UserProfiles/*.xml` and reports valid, broken, empty, and missing `GamePath` values.
 - Registers missing user profiles from `GameProfiles/*.xml` templates when a unique executable match is found, a fuzzy folder-name match clears the confidence threshold, or (optionally) an Eggman/RomVault collection dat resolves a shared-executable game by name.
 - Resolves a dat-provided ProfileCode that doesn't exactly match a local template filename against the live teknogods/TeknoParrotUI profile-code list (falls back to the local GameProfiles listing if unreachable).
+- Can check for and download the latest Eggman/RomVault collection dat itself (`check_eggman_dat_update` / `download_eggman_dat`), porting the original PowerShell tool's `Get-EggmanDatRelease`/`Invoke-EggmanDatDownload`. Only runs on explicit user action; the dat is data, never executed.
 - Repairs broken or empty `GamePath` values only when the matching executable is unambiguous.
 - Copies control bindings from one game you've already bound (the "reference game" for that control type -- driving/lightgun/trackball/analog/button) to every other unbound game of the same type, matched by button function so a wheel value never lands on a gun. A reference game's own bindings are never changed by this. An optional control-overrides JSON file (`controlOverridesPath`) can pin a game to a specific reference game, override its auto-detected control type, exclude it from this copying entirely, or -- if two reference games of the same type disagree on their Input API setting -- tell the plugin which one is correct so the other one gets fixed to match (`canonicalArchetype`).
 - Offers a read-only device survey that recommends which control to bind for each game type based on what devices you have.
@@ -156,6 +157,8 @@ Supported execute actions:
 - `get_status`
 - `status`
 - `preview_registration`
+- `check_eggman_dat_update`
+- `download_eggman_dat`
 - `register_games`
 - `repair_game_paths`
 - `device_survey`
@@ -176,5 +179,5 @@ Supported execute actions:
 - Existing user profiles are not overwritten during registration.
 - Game path repair writes only when there is a unique executable match.
 - Restore creates a pre-restore backup of current profiles before replacing files.
-- The plugin does not download, install, or modify third-party runtime binaries. The optional `eggmanDatPath` setting points at a collection dat the user already has -- this plugin never fetches it.
-- The only outbound network call this plugin makes on its own (outside HyperHQ's own Socket.IO channel) is a read-only fetch of the public teknogods/TeknoParrotUI profile-code list, used solely to resolve dat-based registration matches. It fails soft to the local GameProfiles listing on any error.
+- The plugin does not download, install, or run third-party runtime binaries. The optional `eggmanDatPath` setting points at a collection dat -- either one the user already has, or one fetched live via `download_eggman_dat` (see below). Either way, the dat is parsed as data; it is never executed.
+- Outside HyperHQ's own Socket.IO channel, the plugin makes two kinds of outbound network calls: a read-only fetch of the public teknogods/TeknoParrotUI profile-code list (fails soft to the local GameProfiles listing on any error), and the optional Eggman/RomVault collection dat check/download, which only runs when the user explicitly triggers `check_eggman_dat_update` or `download_eggman_dat`. The download's release filename is sanitized via `Path.GetFileName` plus a containment check before being joined into a save path, and its `browser_download_url` is validated against a `github.com`/`githubusercontent.com` host pattern before being fetched -- same defense-in-depth the original PowerShell tool applies.

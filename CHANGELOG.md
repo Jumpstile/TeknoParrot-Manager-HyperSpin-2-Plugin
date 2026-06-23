@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- Add live download of the Eggman/RomVault collection dat, porting the original PowerShell tool's `Get-EggmanDatRelease`/`Invoke-EggmanDatDownload`. Two new actions: `check_eggman_dat_update` (read-only -- queries `Eggmansworld/TeknoParrot`'s latest GitHub release and reports the asset name/size without downloading) and `download_eggman_dat` (downloads the matching `TeknoParrot*Collection*RomVault*.zip` asset into this plugin's own `EggmanDat` folder). Carries over the original script's safety checks: the release's `browser_download_url` is validated against a `github.com`/`githubusercontent.com` host pattern before fetching, the release filename is sanitized via `Path.GetFileName` and a containment check before it's ever joined into a save path, and the download streams to a `.tmp` file first so an interrupted download never leaves a half-written file at the name `BuildDatIndex` reads from. The dat is data, never executed -- this does not change the "never download/install/run third-party runtime binaries" boundary, just the one specific community data file the original tool also fetched live. Does not auto-update the `eggmanDatPath` setting; the downloaded path is reported back for the user to paste in (or re-run the wizard).
+- New permission entry (`network`/`eggman-dat-download`) makes this new outbound call explicit and separate from the existing read-only `external-api` permission, which remains scoped to the small teknogods profile-code list fetch.
+- Re-enable the `directory`/`file` settings field types from the (reverted) earlier attempt, now that HyperHQ is shipping native browse-dialog support for them.
+
 ## 0.7.0
 
 - Simplify the plugin Settings screen: removed `executablePath`, `userProfilesPath`, `gameProfilesPath`, `iconsPath`, and `backupPath` from `plugin.json`'s top-level `settings` array. All five are pure subfolder overrides of `teknoparrotRootPath` (`TeknoParrotUi.exe`, `UserProfiles`, `GameProfiles`, `Icons`, and `Backups/HyperHQ` respectively) that `Program.cs`'s `ResolvePath`/`ResolveRootPath` already auto-derive when left unset -- nothing changed in that resolution logic, only what the generic Settings page shows. `gamesRootPath` stays, since it points at wherever the user's extracted games actually live and can't be reliably guessed from the TeknoParrot folder.

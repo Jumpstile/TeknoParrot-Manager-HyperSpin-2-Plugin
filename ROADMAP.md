@@ -17,8 +17,14 @@ again):
 - **Group A -- no new permission needed.** Pure XML field manipulation,
   local-only detection (WMI, file inspection), or deploying a file the
   *user* already supplied via a settings path (same pattern as
-  `eggmanDatPath`/`crosshairsPath`). This covers more than it first
-  looks like:
+  `crosshairsPath`). This covers more than it first looks like:
+  - **Update (v0.8.0):** `eggmanDatPath` no longer strictly fits this
+    description -- the plugin can now optionally fetch the collection dat
+    itself (`download_eggman_dat`, ported from the original script's
+    `Invoke-EggmanDatDownload`), gated behind its own dedicated
+    `network`/`eggman-dat-download` permission. It still doesn't fit
+    Group B below, since the dat is data the plugin only ever reads, never
+    a binary it runs.
   - GPU compatibility fix -- 100% local (WMI GPU detection + profile field
     toggle), no network at all.
   - dgVoodoo2 setup -- 100% local. The user supplies the DLLs via a

@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.7.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -52,9 +52,9 @@
   ---------------------
   1. Open the plugin's page inside HyperHQ.
   2. Click "Run Setup Wizard".
-  3. Point it at your TeknoParrot folder (the one containing
-     TeknoParrotUi.exe) -- the wizard checks it and fills in the rest of
-     the paths automatically.
+  3. Click Browse and point it at your TeknoParrot folder (the one
+     containing TeknoParrotUi.exe) -- the wizard checks it and fills in
+     the rest of the paths automatically.
   4. Follow the remaining steps. Each one explains what it's asking for in
      plain language.
 
@@ -73,6 +73,23 @@
      profiles for real.
   3. A game not listed usually means the plugin couldn't tell which game
      it is with confidence -- set that one up by hand in TeknoParrot.
+
+
+  COLLECTION DAT FILE (OPTIONAL, HELPS WITH TRICKY GAMES)
+  ----------------------------------------------------------
+  Some games share one program file across dozens of unrelated titles
+  (common on a few platforms). A community-maintained "collection dat"
+  file can resolve these automatically during registration.
+
+  1. Click "Check Collection Dat For Updates" to see if a newer one is
+     available, without downloading anything.
+  2. Click "Download Collection Dat" to download it (roughly 100-150 MB)
+     into the plugin's own folder.
+  3. Copy the path it gives you into the "Collection Dat File" setting.
+  4. Re-run "Preview Registration" -- previously unmatched games may now
+     resolve automatically.
+
+  This file is only ever read, never run or installed.
 
 
   FIX BROKEN GAME PATHS (IF NEEDED)

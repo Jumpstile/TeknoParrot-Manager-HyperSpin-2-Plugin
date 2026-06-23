@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -54,7 +54,7 @@
     {
       "type": "file",
       "scope": "plugin-directory",
-      "description": "Write timestamped profile backups when requested"
+      "description": "Write timestamped profile backups when requested, and save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded"
     },
     {
       "type": "database",
@@ -70,12 +70,17 @@
       "type": "network",
       "scope": "external-api",
       "description": "Read-only fetch of the public teknogods/TeknoParrotUI profile-code list, used to resolve dat-based registration matches. Falls back to the local GameProfiles listing if unreachable; never downloads or executes anything."
+    },
+    {
+      "type": "network",
+      "scope": "eggman-dat-download",
+      "description": "Optional, user-triggered download of the public Eggmansworld/TeknoParrot collection dat ZIP (community game-name/profile-code data, roughly 100-150 MB), used to resolve shared-executable registration matches. Only runs when the user clicks \"Download Collection Dat\"; the dat is data, never executed."
     }
   ],
   "settings": [
     {
       "key": "teknoparrotRootPath",
-      "type": "string",
+      "type": "directory",
       "label": "TeknoParrot Folder",
       "description": "Folder containing TeknoParrotUi.exe. TeknoParrotUi.exe, UserProfiles, GameProfiles, Icons, and your backup folder are all found automatically from here. Use \"Run Setup Wizard\" if any of those need to be overridden for a non-standard setup.",
       "defaultValue": "",
@@ -83,7 +88,7 @@
     },
     {
       "key": "gamesRootPath",
-      "type": "string",
+      "type": "directory",
       "label": "Games Root Folder",
       "description": "Folder containing your extracted TeknoParrot game folders, used for profile registration and GamePath repair. Not a TeknoParrot subfolder -- this is wherever your games actually live.",
       "defaultValue": "",
@@ -91,19 +96,25 @@
     },
     {
       "key": "eggmanDatPath",
-      "type": "string",
+      "type": "file",
       "label": "Collection Dat File (optional)",
-      "description": "Path to an Eggman/RomVault collection .dat or .zip you already have. Used to disambiguate shared-executable games during registration. This plugin does not download this file for you.",
+      "description": "Path to an Eggman/RomVault collection .dat or .zip. Used to disambiguate shared-executable games during registration. Point this at a copy you already have, or use the \"Download Collection Dat\" action to fetch the latest one and paste the resulting path here.",
       "defaultValue": "",
-      "required": false
+      "required": false,
+      "validation": {
+        "fileTypes": [".dat", ".zip"]
+      }
     },
     {
       "key": "controlOverridesPath",
-      "type": "string",
+      "type": "file",
       "label": "Control Overrides File (optional)",
       "description": "Path to a JSON file for fine-tuning control-binding copying. All fields are optional: \"noPropagate\" (game codes to leave alone), \"forceArchetype\" (game code -> the specific already-bound game to copy from), \"familyOverride\" (game code -> control type, for games detected wrong), \"canonicalArchetype\" (control type -> the already-bound game whose Input API setting is correct, used to fix any other already-bound game of that type that disagrees).",
       "defaultValue": "",
-      "required": false
+      "required": false,
+      "validation": {
+        "fileTypes": [".json"]
+      }
     },
     {
       "key": "minBoundForArchetype",
@@ -115,7 +126,7 @@
     },
     {
       "key": "crosshairsPath",
-      "type": "string",
+      "type": "directory",
       "label": "Crosshairs Folder (optional)",
       "description": "Folder containing PNG crosshair files for lightgun setup. Leave empty to use the 321 crosshairs bundled with this plugin.",
       "defaultValue": "",
@@ -169,6 +180,23 @@
       "icon": "eye",
       "type": "secondary",
       "confirmation": false
+    },
+    {
+      "id": "check_eggman_dat_update",
+      "label": "Check Collection Dat For Updates",
+      "description": "Check whether a newer Eggmansworld/TeknoParrot collection dat release is available on GitHub, without downloading anything.",
+      "icon": "refresh-cw",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "download_eggman_dat",
+      "label": "Download Collection Dat",
+      "description": "Download the latest Eggmansworld/TeknoParrot collection dat ZIP (roughly 100-150 MB) used to resolve shared-executable registration matches.",
+      "icon": "download",
+      "type": "secondary",
+      "confirmation": true,
+      "confirmationMessage": "This downloads a community-maintained collection dat ZIP (roughly 100-150 MB) from Eggmansworld/TeknoParrot's GitHub releases into this plugin's own folder. It is only used to help match games during registration and is never executed. After it finishes, paste the reported path into the \"Collection Dat File\" setting to start using it. Continue?"
     },
     {
       "id": "register_games",
@@ -331,7 +359,7 @@
             "form": [
               {
                 "key": "teknoparrotRootPath",
-                "type": "string",
+                "type": "directory",
                 "label": "TeknoParrot Folder",
                 "placeholder": "C:\\TeknoParrot",
                 "helpText": "The folder containing TeknoParrotUi.exe. Everything else on this page is found automatically from here unless you override it below.",
@@ -339,7 +367,7 @@
               },
               {
                 "key": "gamesRootPath",
-                "type": "string",
+                "type": "directory",
                 "label": "Games Root Folder",
                 "placeholder": "D:\\Arcade\\TeknoParrot",
                 "helpText": "Where your extracted games live (not a TeknoParrot subfolder). Optional -- used to register missing UserProfiles and repair broken GamePath values.",
@@ -347,7 +375,7 @@
               },
               {
                 "key": "backupPath",
-                "type": "string",
+                "type": "directory",
                 "label": "Backup Folder",
                 "placeholder": "C:\\TeknoParrot\\Backups\\HyperHQ",
                 "helpText": "Where this plugin saves a timestamped copy of your profiles before any change. Defaults to a Backups\\HyperHQ folder under TeknoParrot Folder.",
@@ -355,23 +383,29 @@
               },
               {
                 "key": "eggmanDatPath",
-                "type": "string",
+                "type": "file",
                 "label": "Collection Dat File (advanced)",
                 "placeholder": "C:\\TeknoParrot\\Eggman\\collection.dat",
-                "helpText": "Optional. Point at a collection .dat or .zip you already have to help registration resolve shared-executable games. Not downloaded by this plugin.",
-                "required": false
+                "helpText": "Optional. Point at a collection .dat or .zip to help registration resolve shared-executable games, or use \"Download Collection Dat\" from the plugin page to fetch the latest one.",
+                "required": false,
+                "validation": {
+                  "fileTypes": [".dat", ".zip"]
+                }
               },
               {
                 "key": "executablePath",
-                "type": "string",
+                "type": "file",
                 "label": "TeknoParrotUi.exe (advanced override)",
                 "placeholder": "C:\\TeknoParrot\\TeknoParrotUi.exe",
                 "helpText": "Only needed if TeknoParrotUi.exe isn't directly inside TeknoParrot Folder.",
-                "required": false
+                "required": false,
+                "validation": {
+                  "fileTypes": [".exe"]
+                }
               },
               {
                 "key": "userProfilesPath",
-                "type": "string",
+                "type": "directory",
                 "label": "UserProfiles Folder (advanced override)",
                 "placeholder": "C:\\TeknoParrot\\UserProfiles",
                 "helpText": "Only needed if UserProfiles isn't directly inside TeknoParrot Folder.",
@@ -379,7 +413,7 @@
               },
               {
                 "key": "gameProfilesPath",
-                "type": "string",
+                "type": "directory",
                 "label": "GameProfiles Folder (advanced override)",
                 "placeholder": "C:\\TeknoParrot\\GameProfiles",
                 "helpText": "Only needed if GameProfiles isn't directly inside TeknoParrot Folder.",
@@ -387,7 +421,7 @@
               },
               {
                 "key": "iconsPath",
-                "type": "string",
+                "type": "directory",
                 "label": "Icons Folder (advanced override)",
                 "placeholder": "C:\\TeknoParrot\\Icons",
                 "helpText": "Only needed if Icons isn't directly inside TeknoParrot Folder.",

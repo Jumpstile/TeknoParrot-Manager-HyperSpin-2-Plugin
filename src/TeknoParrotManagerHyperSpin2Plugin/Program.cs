@@ -14,7 +14,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.6.0";
+    internal const string PluginVersion = "0.8.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -384,6 +384,8 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),
             "restore_backup" => RestoreBackup(settings, data),
+            "check_eggman_dat_update" => await CheckEggmanDatUpdate(),
+            "download_eggman_dat" => await DownloadEggmanDat(),
             "onboardingStepExecute" => await OnboardingStepExecute(data),
             _ => new { error = $"Unsupported action: {action}" }
         };
@@ -830,6 +832,64 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             restored_profiles = restored,
             user_profiles_path = scan.UserProfilesPath,
             pre_restore_backup_path = preRestoreBackupPath
+        };
+    }
+
+    // Read-only: checks whether a newer Eggman/RomVault collection dat
+    // release is available, without downloading anything. Ported from the
+    // PowerShell tool's "check for a newer release" prompt on later runs.
+    private static async Task<object> CheckEggmanDatUpdate()
+    {
+        var release = await TeknoParrotProfileScanner.GetEggmanDatReleaseAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        if (release is null)
+        {
+            return new { success = false, error = "Could not find a collection dat release on GitHub. See the log for details." };
+        }
+
+        var haveSameFile = !string.IsNullOrWhiteSpace(settings.EggmanDatPath) &&
+                            string.Equals(Path.GetFileName(settings.EggmanDatPath), release.FileName, StringComparison.OrdinalIgnoreCase) &&
+                            File.Exists(settings.EggmanDatPath);
+
+        return new
+        {
+            success = true,
+            file_name = release.FileName,
+            size_mb = Math.Round(release.SizeBytes / 1024d / 1024d, 1),
+            download_url = release.DownloadUrl,
+            already_have_this_release = haveSameFile
+        };
+    }
+
+    // Downloads the latest Eggman/RomVault collection dat ZIP into this
+    // plugin's own folder and reports the saved path. Ported from the
+    // PowerShell tool's Invoke-EggmanDatDownloadInteractive, minus the
+    // interactive save-location prompt (HyperHQ plugins are non-interactive
+    // here -- the save location is always this plugin's own folder). Does
+    // NOT update the eggmanDatPath setting itself; copy the returned path
+    // into the "Collection Dat File" setting (or re-run Setup Wizard) to
+    // start using it.
+    private static async Task<object> DownloadEggmanDat()
+    {
+        var release = await TeknoParrotProfileScanner.GetEggmanDatReleaseAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        if (release is null)
+        {
+            return new { success = false, error = "Could not find a collection dat release on GitHub. See the log for details." };
+        }
+
+        var destinationDir = Path.Combine(AppContext.BaseDirectory, "EggmanDat");
+        var savedPath = await TeknoParrotProfileScanner.DownloadEggmanDatAsync(ProfileSetHttpClient, release, destinationDir, LogAsyncSink).ConfigureAwait(false);
+        if (savedPath is null)
+        {
+            return new { success = false, error = "Download failed. See the log for details." };
+        }
+
+        return new
+        {
+            success = true,
+            eggman_dat_path = savedPath,
+            file_name = release.FileName,
+            size_mb = Math.Round(release.SizeBytes / 1024d / 1024d, 1),
+            message = "Downloaded. Paste this path into the \"Collection Dat File\" setting to start using it."
         };
     }
 
@@ -2025,16 +2085,31 @@ public static partial class TeknoParrotProfileScanner
     // executable is shared by dozens of unrelated titles AND none of the
     // candidate profile codes resemble the folder name (e.g. NESiCAxLive's
     // game.exe). The Eggman/RomVault collection dat ships an authoritative
-    // game-name -> ProfileCode mapping for exactly this case. This plugin
-    // does not download that dat itself (consistent with "does not
-    // download, install, or modify third-party runtime binaries" -- a
-    // multi-hundred-MB community dat is exactly that); the user points
-    // EggmanDatPath at a copy they already have.
+    // game-name -> ProfileCode mapping for exactly this case. The user can
+    // point EggmanDatPath at a copy they already have, or use the
+    // "Download Collection Dat" action below to fetch the latest one from
+    // Eggmansworld/TeknoParrot's GitHub releases -- ported from the
+    // original PowerShell tool's Get-EggmanDatRelease/Invoke-EggmanDatDownload.
+    // The dat is data, never executed, but it's still untrusted external
+    // content: the release filename is sanitized via ResolveEggmanDatSavePath
+    // before it's ever joined into a save path, and the download URL is
+    // checked against SafeGitHubDownloadHost before being fetched.
     // ---------------------------------------------------------------------
 
     private const string TeknoParrotUiRepo = "teknogods/TeknoParrotUI";
+    private const string EggmanDatRepo = "Eggmansworld/TeknoParrot";
     private const string GameProfilesTreePrefix = "TeknoParrotUi.Common/GameProfiles/";
     private static readonly Regex SafeStemPattern = new(@"^[\w]+$", RegexOptions.Compiled);
+
+    // Mirrors the PowerShell tool's -like 'TeknoParrot*Collection*RomVault*.zip'.
+    private static readonly Regex EggmanDatAssetPattern = new(
+        @"^TeknoParrot.*Collection.*RomVault.*\.zip$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    // Mirrors the PowerShell tool's download-URL safety check: the asset's
+    // browser_download_url must actually point at GitHub, guarding against
+    // a compromised/crafted API response redirecting the download elsewhere.
+    private static readonly Regex SafeGitHubDownloadHost = new(
+        @"^https://[a-zA-Z0-9._-]*(github\.com|githubusercontent\.com)/", RegexOptions.Compiled);
 
     // Reads a No-Intro/Eggman style Logiqx dat (<game name="..."><GameProfile>
     // ...<Executable>...) without loading the whole document -- the
@@ -2145,6 +2220,181 @@ public static partial class TeknoParrotProfileScanner
         }
 
         return index;
+    }
+
+    // Picks the collection dat ZIP asset out of a GitHub releases-API
+    // response for Eggmansworld/TeknoParrot, mirroring the PowerShell
+    // tool's Get-EggmanDatRelease. Returns null if no asset matches the
+    // naming convention, or if its download URL doesn't look like a real
+    // GitHub asset URL (defense against a crafted/compromised response --
+    // same convention as the original script's regex check).
+    internal static EggmanDatRelease? SelectEggmanDatAsset(JsonElement releaseJson)
+    {
+        if (!releaseJson.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        foreach (var asset in assets.EnumerateArray())
+        {
+            var name = asset.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+            if (string.IsNullOrWhiteSpace(name) || !EggmanDatAssetPattern.IsMatch(name))
+            {
+                continue;
+            }
+
+            var downloadUrl = asset.TryGetProperty("browser_download_url", out var urlProp) ? urlProp.GetString() : null;
+            if (string.IsNullOrWhiteSpace(downloadUrl) || !SafeGitHubDownloadHost.IsMatch(downloadUrl))
+            {
+                return null;
+            }
+
+            var sizeBytes = asset.TryGetProperty("size", out var sizeProp) && sizeProp.TryGetInt64(out var size) ? size : 0L;
+            return new EggmanDatRelease(downloadUrl, name, sizeBytes);
+        }
+
+        return null;
+    }
+
+    // Queries GitHub for the latest Eggmansworld/TeknoParrot release and
+    // returns its collection dat ZIP asset, or null if unavailable. Same
+    // retry/timeout/User-Agent shape as FetchProfileCodeSetAsync below.
+    public static async Task<EggmanDatRelease?> GetEggmanDatReleaseAsync(
+        HttpClient http, Action<string>? log = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(http);
+
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                using var attemptCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                attemptCts.CancelAfter(TimeSpan.FromSeconds(20));
+                using var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.github.com/repos/{EggmanDatRepo}/releases/latest");
+                request.Headers.UserAgent.ParseAdd($"TeknoParrotManagerHyperSpin2Plugin/{TeknoParrotManagerHyperSpin2PluginMain.PluginVersion}");
+                using var response = await http.SendAsync(request, attemptCts.Token).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                var body = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: attemptCts.Token).ConfigureAwait(false);
+                var release = SelectEggmanDatAsset(body);
+                if (release is null)
+                {
+                    log?.Invoke("EggmanDat: no matching collection dat asset found in the latest release.");
+                }
+                return release;
+            }
+            catch (HttpRequestException ex)
+            {
+                var status = (int?)ex.StatusCode ?? 0;
+                if (attempt >= 3 || status is >= 400 and < 500)
+                {
+                    log?.Invoke($"EggmanDat: GitHub release query failed -- {ex.Message}");
+                    return null;
+                }
+            }
+            catch (Exception ex) when (ex is TaskCanceledException or JsonException)
+            {
+                if (attempt >= 3)
+                {
+                    log?.Invoke($"EggmanDat: GitHub release query failed -- {ex.Message}");
+                    return null;
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
+        }
+
+        return null;
+    }
+
+    // Resolves a safe destination path for a downloaded Eggman dat release
+    // inside destinationDir: strips any path components from the
+    // GitHub-supplied filename via Path.GetFileName, then confirms the
+    // result still resolves inside destinationDir before it's ever used in
+    // a file write. Returns null if the name is empty or would escape
+    // destinationDir.
+    internal static string? ResolveEggmanDatSavePath(string destinationDir, string releaseFileName)
+    {
+        var safeName = Path.GetFileName(releaseFileName);
+        if (string.IsNullOrWhiteSpace(safeName))
+        {
+            return null;
+        }
+
+        var candidate = Path.Combine(destinationDir, safeName);
+        return IsPathInside(candidate, destinationDir) ? candidate : null;
+    }
+
+    // Downloads an Eggman dat release ZIP into destinationDir. Streams to a
+    // ".tmp" file first and only moves it to the final name on a fully
+    // successful download, so an interrupted download never leaves a
+    // half-written file at the name BuildDatIndex would otherwise read from
+    // on the next run. Mirrors the PowerShell tool's
+    // Invoke-EggmanDatDownload (retry-with-backoff, delete-partial-on-failure).
+    public static async Task<string?> DownloadEggmanDatAsync(
+        HttpClient http, EggmanDatRelease release, string destinationDir, Action<string>? log = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(http);
+        ArgumentNullException.ThrowIfNull(release);
+
+        var savePath = ResolveEggmanDatSavePath(destinationDir, release.FileName);
+        if (savePath is null)
+        {
+            log?.Invoke($"EggmanDat: SECURITY -- unsafe release filename '{release.FileName}', skipped.");
+            return null;
+        }
+
+        Directory.CreateDirectory(destinationDir);
+        var tempPath = savePath + ".tmp";
+
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, release.DownloadUrl);
+                request.Headers.UserAgent.ParseAdd($"TeknoParrotManagerHyperSpin2Plugin/{TeknoParrotManagerHyperSpin2PluginMain.PluginVersion}");
+                using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+
+                await using (var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+                await using (var fileStream = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    await contentStream.CopyToAsync(fileStream, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (File.Exists(savePath))
+                {
+                    File.Delete(savePath);
+                }
+                File.Move(tempPath, savePath);
+                log?.Invoke($"EggmanDat: downloaded '{release.FileName}' ({Math.Round(release.SizeBytes / 1024d / 1024d, 1)} MB) to '{savePath}'.");
+                return savePath;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException)
+            {
+                try
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        File.Delete(tempPath);
+                    }
+                }
+                catch (IOException cleanupEx)
+                {
+                    log?.Invoke($"EggmanDat: could not remove partial download '{tempPath}' -- {cleanupEx.Message}");
+                }
+
+                var status = ex is HttpRequestException httpEx ? (int?)httpEx.StatusCode ?? 0 : 0;
+                if (attempt >= 3 || status is >= 400 and < 500)
+                {
+                    log?.Invoke($"EggmanDat: download failed -- {ex.Message}");
+                    return null;
+                }
+
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        return null;
     }
 
     // Fetches the live set of profile codes teknogods/TeknoParrotUI ships,
@@ -2361,3 +2611,5 @@ public static partial class TeknoParrotProfileScanner
 }
 
 public sealed record TeknoParrotDatEntry(string ProfileCode, string Executable);
+
+public sealed record EggmanDatRelease(string DownloadUrl, string FileName, long SizeBytes);

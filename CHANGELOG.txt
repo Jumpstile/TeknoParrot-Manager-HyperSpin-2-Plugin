@@ -7,6 +7,32 @@
 
 
 -------------------------------------------------------------------------------
+  v0.8.0
+-------------------------------------------------------------------------------
+
+  Added the ability to download the optional collection dat file straight
+  from the plugin, instead of needing to find and download it yourself.
+  Two new buttons:
+
+    Check Collection Dat For Updates   -- tells you if a newer one is
+                                          available, without downloading
+                                          anything.
+
+    Download Collection Dat            -- downloads the latest one
+                                          (roughly 100-150 MB) into the
+                                          plugin's own folder. Once it's
+                                          done, paste the path it gives
+                                          you into the "Collection Dat
+                                          File" setting to start using it.
+
+  This file is only used to help match games during registration -- it is
+  never run or installed, just read.
+
+  Folder and file settings now show a proper Browse button again, now
+  that HyperHQ has added support for it.
+
+
+-------------------------------------------------------------------------------
   v0.7.0
 -------------------------------------------------------------------------------
 

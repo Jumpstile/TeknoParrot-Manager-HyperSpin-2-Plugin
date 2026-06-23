@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.7.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.8.0
   Author: Jumpstile
 ===============================================================================
 
@@ -48,7 +48,10 @@
     across many titles, folder names are compared to candidate profile
     codes and the best match is used when the confidence is high enough.
     An optional collection dat file (Eggman/RomVault) can resolve trickier
-    cases the same way the original PowerShell tool does.
+    cases the same way the original PowerShell tool does. The plugin can
+    check for and download the latest collection dat for you ("Check
+    Collection Dat For Updates" / "Download Collection Dat") -- it's only
+    ever read, never run or installed.
 
   - Game path repair. Finds broken or empty game paths and repoints them
     to the right executable, but only when there is exactly one possible
@@ -239,10 +242,13 @@
   - Restoring a backup automatically backs up your current profiles first.
   - The plugin does not download, install, or modify any third-party
     runtime binaries.
-  - The only outbound network call the plugin makes on its own is a
-    read-only check of the public TeknoParrotUI profile-code list, used
-    only to help resolve registration matches. If that check fails, the
-    plugin falls back to your local GameProfiles listing without error.
+  - Besides HyperHQ's own communication channel, the plugin makes two
+    kinds of outbound network calls, both read-only or explicitly
+    triggered by you: a check of the public TeknoParrotUI profile-code
+    list (falls back to your local GameProfiles listing without error if
+    it fails), and the optional collection dat check/download described
+    above, which only runs when you click "Check Collection Dat For
+    Updates" or "Download Collection Dat".
 
 
 -------------------------------------------------------------------------------
