@@ -7,6 +7,42 @@
 
 
 -------------------------------------------------------------------------------
+  v0.10.0
+-------------------------------------------------------------------------------
+
+  Added ReShade support. ReShade is a free tool that can make your games
+  look better -- sharper image, CRT-style scanlines, richer colors, and
+  more. You provide the ReShade file yourself (this plugin doesn't
+  download it for you); the plugin figures out the right way to install
+  it for each game automatically.
+
+  New buttons:
+
+    Check ReShade For Updates   -- checks your file's version and digital
+                                   signature against the latest release,
+                                   without changing anything.
+
+    Preview ReShade Setup       -- shows which games would be changed.
+
+    Apply ReShade Setup         -- installs it. Everything is backed up
+                                   first, and your game files themselves
+                                   are never modified.
+
+  New settings (all optional, but the 64-bit DLL is required to use this
+  feature at all):
+
+    ReShade DLL, 64-bit         -- the ReShade file for most games.
+    ReShade DLL, 32-bit         -- only needed for older 32-bit games.
+    ReShade Preset File         -- a ready-made effects setup to use on
+                                   every game.
+    Per-Game ReShade Presets    -- advanced: a different preset for one
+    Folder                         specific game.
+
+  To remove ReShade from a game later, just delete the one file it added
+  to that game's folder -- nothing else is touched.
+
+
+-------------------------------------------------------------------------------
   v0.9.1
 -------------------------------------------------------------------------------
 

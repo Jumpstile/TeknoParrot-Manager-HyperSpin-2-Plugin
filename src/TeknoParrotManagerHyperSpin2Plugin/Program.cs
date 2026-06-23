@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,7 +15,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.9.1";
+    internal const string PluginVersion = "0.10.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -408,6 +409,79 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { success = true, result, detected_name = detection?.Name, backup_path = backup?.BackupPath };
     }
 
+    // Read-only: checks the configured ReShade DLL's version against
+    // reshade.me's latest release, and reports its Authenticode signature
+    // status. Does not deploy anything.
+    private static async Task<object> CheckReShadeUpdate(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        if (string.IsNullOrWhiteSpace(settings.ReShadeSourceDllPath) || !File.Exists(settings.ReShadeSourceDllPath))
+        {
+            return new { success = false, error = "Set the \"ReShade DLL (64-bit)\" setting to a ReShade DLL you already have first." };
+        }
+
+        string? currentVersion = null;
+        try
+        {
+            var info = FileVersionInfo.GetVersionInfo(settings.ReShadeSourceDllPath);
+            currentVersion = $"{info.FileMajorPart}.{info.FileMinorPart}.{info.FileBuildPart}";
+        }
+        catch (Exception ex) when (ex is IOException or System.ComponentModel.Win32Exception)
+        {
+            LogAsyncSink($"ReShade: could not read version info -- {ex.Message}");
+        }
+
+        var signature = TeknoParrotProfileScanner.CheckReShadeDllSignature(settings.ReShadeSourceDllPath);
+        var latest = await TeknoParrotProfileScanner.GetReShadeLatestVersionAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+
+        var upToDate = latest is not null && currentVersion is not null &&
+                       Version.TryParse(currentVersion, out var current) && Version.TryParse(latest, out var latestVersion) &&
+                       current >= latestVersion;
+
+        return new
+        {
+            success = true,
+            current_version = currentVersion,
+            latest_version = latest,
+            up_to_date = latest is null ? (bool?)null : upToDate,
+            signature_status = signature.Status,
+            signature_status_text = TeknoParrotProfileScanner.GetSignatureStatusText(signature.Status),
+            signature_signer = signature.Signer
+        };
+    }
+
+    private static object PreviewReShadeSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        if (string.IsNullOrWhiteSpace(settings.ReShadeSourceDllPath) || !File.Exists(settings.ReShadeSourceDllPath))
+        {
+            return new { success = false, error = "Set the \"ReShade DLL (64-bit)\" setting to a ReShade DLL you already have first." };
+        }
+
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var result = TeknoParrotProfileScanner.ApplyReShadeSetup(settings, gameCodes, dryRun: true, LogAsyncSink);
+        return new { success = true, result };
+    }
+
+    private static object ApplyReShadeSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        if (string.IsNullOrWhiteSpace(settings.ReShadeSourceDllPath) || !File.Exists(settings.ReShadeSourceDllPath))
+        {
+            return new { success = false, error = "Set the \"ReShade DLL (64-bit)\" setting to a ReShade DLL you already have first." };
+        }
+
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = TeknoParrotProfileScanner.ApplyReShadeSetup(settings, gameCodes, dryRun: false, LogAsyncSink);
+        return new { success = true, result, backup_path = backup?.BackupPath };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -447,6 +521,9 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "hide_cursor" => HideCursor(data),
             "preview_gpu_fix" => PreviewGpuFix(data),
             "apply_gpu_fix" => ApplyGpuFix(data),
+            "check_reshade_update" => await CheckReShadeUpdate(data),
+            "preview_reshade_setup" => PreviewReShadeSetup(data),
+            "apply_reshade_setup" => ApplyReShadeSetup(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),
@@ -1051,6 +1128,21 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         };
     }
 
+    private static List<string>? GetStringArray(JsonElement data, string propertyName)
+    {
+        if (data.ValueKind != JsonValueKind.Object ||
+            !data.TryGetProperty(propertyName, out var value) ||
+            value.ValueKind != JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        return value.EnumerateArray()
+            .Where(element => element.ValueKind == JsonValueKind.String)
+            .Select(element => element.GetString()!)
+            .ToList();
+    }
+
     private static bool HasProperty(JsonElement data, string propertyName)
     {
         return data.ValueKind == JsonValueKind.Object &&
@@ -1159,6 +1251,10 @@ public sealed class TeknoParrotSettings
     public string ControlOverridesPath { get; set; } = string.Empty;
     public int MinBoundForArchetype { get; set; } = 5;
     public string CrosshairsPath { get; set; } = string.Empty;
+    public string ReShadeSourceDllPath { get; set; } = string.Empty;
+    public string ReShadeSourceDll32Path { get; set; } = string.Empty;
+    public string ReShadePresetPath { get; set; } = string.Empty;
+    public string ReShadePresetsPath { get; set; } = string.Empty;
     public bool DownloadMedia { get; set; } = true;
     public bool AutoSyncOnDbConnect { get; set; } = false;
 
@@ -1177,6 +1273,10 @@ public sealed class TeknoParrotSettings
             ControlOverridesPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ControlOverridesPath, ControlOverridesPath),
             MinBoundForArchetype = other.MinBoundForArchetype > 0 ? other.MinBoundForArchetype : MinBoundForArchetype,
             CrosshairsPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.CrosshairsPath, CrosshairsPath),
+            ReShadeSourceDllPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadeSourceDllPath, ReShadeSourceDllPath),
+            ReShadeSourceDll32Path = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadeSourceDll32Path, ReShadeSourceDll32Path),
+            ReShadePresetPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadePresetPath, ReShadePresetPath),
+            ReShadePresetsPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadePresetsPath, ReShadePresetsPath),
             DownloadMedia = other.DownloadMedia,
             AutoSyncOnDbConnect = other.AutoSyncOnDbConnect
         };

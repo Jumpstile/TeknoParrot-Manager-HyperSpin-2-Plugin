@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.1  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.10.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -150,6 +150,24 @@
 
   Safe to run again any time you change or update your graphics card.
   Doesn't use the internet -- everything happens on your computer.
+
+
+  MAKE YOUR GAMES LOOK BETTER WITH RESHADE (OPTIONAL)
+  --------------------------------------------------------
+  ReShade is a free tool for sharper image, CRT-style scanlines, richer
+  colors, and more. You get the file yourself; the plugin installs it.
+
+  1. Go to reshade.me and download the installer.
+  2. Run it, pointing it at any 64-bit game's .exe -- it creates a DLL
+     file in that game's folder.
+  3. Set that DLL as the "ReShade DLL, 64-bit" setting in this plugin.
+  4. Click "Check ReShade For Updates" to confirm the file is genuine.
+  5. Click "Preview ReShade Setup" to see which games would be changed.
+  6. Click "Apply ReShade Setup" to install it.
+
+  Once installed, press the Home key in-game to turn effects on or off.
+  To remove it from a game, delete the one file it added -- nothing else
+  is touched.
 
 
   ADD YOUR GAMES TO HYPERHQ

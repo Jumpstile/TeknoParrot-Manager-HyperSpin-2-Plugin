@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0
+
+- Add ReShade setup (ROADMAP.md Phase 4), porting the original PowerShell tool's `Invoke-ReShadeSetup`/`Test-ReShadeDllSignature`/`Get-ReShadeLatestVersion`/`Get-ReShadeTargetInfo`/`Get-GameApiDll`/`Get-ExeArchitecture`. Three new actions: `check_reshade_update` (read-only -- file version + Authenticode signature status + reshade.me version check), `preview_reshade_setup` (dry-run), and `apply_reshade_setup`. The 64-bit ReShade DLL is required (`reShadeSourceDllPath` setting); a 32-bit DLL (`reShadeSourceDll32Path`) and a preset `.ini` (`reShadePresetPath`, with a per-game override folder via `reShadePresetsPath`) are optional. This plugin does not download ReShade itself -- same "user already has it" pattern as `crosshairsPath`.
+- Detects each game's exe architecture (32/64-bit, via the PE Optional Header's machine word) and graphics API (DirectX 9/11/12 or OpenGL, by scanning the exe for known DLL imports) to pick the right ReShade DLL and destination filename automatically. OpenParrot games get an `openparrot` subfolder redirect; BudgieLoader games always use `opengl32.dll`.
+- Real Authenticode signature verification via the new `AuthenticodeExaminer` NuGet dependency (Windows-only, wraps native Windows trust-verification APIs) -- informational, not a hard gate, matching the original script's reasoning: the user supplied this file themselves, so an invalid/untrusted signature is surfaced loudly but doesn't block setup.
+- New `network`/`reshade-version-check` permission for the read-only reshade.me version check -- same risk tier as the existing GitHub profile-list fetch, not a Safety Notes boundary change (the DLL itself is still always user-supplied, never downloaded by this plugin).
+- `AuthenticodeExaminer` pulled in a vulnerable transitive `System.Security.Cryptography.Xml` 8.0.1 (NU1903, two known high-severity CVEs) -- pinned an explicit direct reference to 10.0.9 to override it. No vulnerability warnings remain.
+- 27 new tests covering exe architecture/API detection, target-folder resolution (openparrot/BudgieLoader special cases), signature status text mapping, the reshade.me version parser, and deploy/dry-run/filtering behavior (80/80 passing).
+
 ## 0.9.1
 
 - Add a "Buy Me a Coffee" sponsor link (https://buymeacoffee.com/jumpstile) to README.md/README.txt and the wiki Home page. `.github/FUNDING.yml` already had `buy_me_a_coffee: jumpstile` configured, so GitHub's native Sponsor button already pointed here -- this just makes it visible to anyone reading the docs directly. Entirely optional, never required to use the plugin.

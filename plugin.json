@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -75,6 +75,11 @@
       "type": "network",
       "scope": "eggman-dat-download",
       "description": "Optional, user-triggered download of the public Eggmansworld/TeknoParrot collection dat ZIP (community game-name/profile-code data, roughly 100-150 MB), used to resolve shared-executable registration matches. Only runs when the user clicks \"Download Collection Dat\"; the dat is data, never executed."
+    },
+    {
+      "type": "network",
+      "scope": "reshade-version-check",
+      "description": "Read-only fetch of https://reshade.me to compare your configured ReShade DLL's version against the latest release. Only runs when the user checks for ReShade updates; never downloads or executes anything."
     }
   ],
   "settings": [
@@ -129,6 +134,47 @@
       "type": "directory",
       "label": "Crosshairs Folder (optional)",
       "description": "Your own crosshair images for lightgun games. Leave this blank to use the 321 crosshair designs already included with the plugin.",
+      "defaultValue": "",
+      "required": false
+    },
+    {
+      "key": "reShadeSourceDllPath",
+      "type": "file",
+      "label": "ReShade DLL, 64-bit (optional)",
+      "description": "Makes your games look better with optional visual effects (sharpening, CRT scanlines, color boost, and more). Get this file from reshade.me, then point this at it. Leave blank to skip ReShade entirely.",
+      "defaultValue": "",
+      "required": false,
+      "validation": {
+        "fileTypes": [".dll"]
+      }
+    },
+    {
+      "key": "reShadeSourceDll32Path",
+      "type": "file",
+      "label": "ReShade DLL, 32-bit (optional)",
+      "description": "Only needed if some of your games are 32-bit. Leave blank to skip ReShade for those games.",
+      "defaultValue": "",
+      "required": false,
+      "validation": {
+        "fileTypes": [".dll"]
+      }
+    },
+    {
+      "key": "reShadePresetPath",
+      "type": "file",
+      "label": "ReShade Preset File (optional)",
+      "description": "A ready-made ReShade effects file (.ini) to use on every game. Leave blank to install ReShade without a preset -- you can still turn effects on and off in-game by pressing Home.",
+      "defaultValue": "",
+      "required": false,
+      "validation": {
+        "fileTypes": [".ini"]
+      }
+    },
+    {
+      "key": "reShadePresetsPath",
+      "type": "directory",
+      "label": "Per-Game ReShade Presets Folder (advanced, optional)",
+      "description": "Advanced. A folder of preset files named after a specific game (e.g. Daytona3.ini) to use instead of your main preset for just that game. Leave blank unless you need this.",
       "defaultValue": "",
       "required": false
     },
@@ -283,6 +329,31 @@
       "type": "primary",
       "confirmation": true,
       "confirmationMessage": "This will apply a graphics card compatibility fix to every game that supports one, based on your detected (or chosen) GPU brand. Everything is backed up first. Continue?"
+    },
+    {
+      "id": "check_reshade_update",
+      "label": "Check ReShade For Updates",
+      "description": "Check your configured ReShade file's version and signature against the latest release, without changing anything.",
+      "icon": "refresh-cw",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "preview_reshade_setup",
+      "label": "Preview ReShade Setup",
+      "description": "See which games would get ReShade visual effects installed, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_reshade_setup",
+      "label": "Apply ReShade Setup",
+      "description": "Installs ReShade visual effects (sharpening, CRT scanlines, color boost, and more) into your games.",
+      "icon": "sparkles",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This will install ReShade into every supported game using the DLL(s) and preset you've configured. Everything is backed up first, and your game files are never modified. Continue?"
     },
     {
       "id": "preview_sync",

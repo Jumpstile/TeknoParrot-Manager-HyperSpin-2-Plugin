@@ -29,6 +29,7 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - Deploys a chosen pair of P1/P2 crosshair images (321 bundled, or your own via `crosshairsPath`) to every registered lightgun game, including ElfLdr2 and PCSX2 (with `PCSX2.ini` `cursor_path` updates) special cases, and generates an HTML preview grid to browse them.
 - Hides the Windows cursor for every registered lightgun game that defines a cursor-hide field.
 - Detects your GPU vendor (AMD/NVIDIA/Intel) via a local WMI query and applies the matching compatibility fix field to every registered profile that has one (`preview_gpu_fix` / `apply_gpu_fix`). Pure local detection plus profile XML edits -- no network calls.
+- Installs ReShade (`preview_reshade_setup` / `apply_reshade_setup`) using a user-supplied DLL (this plugin never downloads ReShade itself), auto-detecting each game's exe architecture and graphics API to pick the right DLL and destination filename, with Authenticode signature verification and a read-only `check_reshade_update` version check against reshade.me.
 - Backs up and restores profile XML files, including a pre-restore backup before overwrite.
 - Creates and syncs the canonical HyperHQ system `Arcade (TeknoParrot)`.
 - Imports TeknoParrot profile XML files as launchable HyperHQ games.
@@ -38,8 +39,8 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 
 TeknoParrot Manager includes many broader Windows setup and game-modification workflows. This plugin intentionally keeps the HyperHQ surface narrower:
 
-- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, GPU compatibility fix, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
-- Not included yet: ReShade installation, dgVoodoo2 setup, FFB setup, Postgres setup, and BepInEx deployment. See ROADMAP.md.
+- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, GPU compatibility fix, ReShade setup, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
+- Not included yet: dgVoodoo2 setup, FFB setup, Postgres setup, and BepInEx deployment. See ROADMAP.md.
 
 That boundary is deliberate. HyperHQ should remain the launcher and library manager, while the plugin extends TeknoParrot support where HyperHQ needs structured profile and import behavior.
 
@@ -172,6 +173,9 @@ Supported execute actions:
 - `hide_cursor`
 - `preview_gpu_fix`
 - `apply_gpu_fix`
+- `check_reshade_update`
+- `preview_reshade_setup`
+- `apply_reshade_setup`
 - `preview_sync`
 - `sync_games`
 - `backup_profiles`
@@ -184,8 +188,8 @@ Supported execute actions:
 - Existing user profiles are not overwritten during registration.
 - Game path repair writes only when there is a unique executable match.
 - Restore creates a pre-restore backup of current profiles before replacing files.
-- The plugin does not download, install, or run third-party runtime binaries. The optional `eggmanDatPath` setting points at a collection dat -- either one the user already has, or one fetched live via `download_eggman_dat` (see below). Either way, the dat is parsed as data; it is never executed.
-- Outside HyperHQ's own Socket.IO channel, the plugin makes two kinds of outbound network calls: a read-only fetch of the public teknogods/TeknoParrotUI profile-code list (fails soft to the local GameProfiles listing on any error), and the optional Eggman/RomVault collection dat check/download, which only runs when the user explicitly triggers `check_eggman_dat_update` or `download_eggman_dat`. The download's release filename is sanitized via `Path.GetFileName` plus a containment check before being joined into a save path, and its `browser_download_url` is validated against a `github.com`/`githubusercontent.com` host pattern before being fetched -- same defense-in-depth the original PowerShell tool applies.
+- The plugin does not download, install, or run third-party runtime binaries. The optional `eggmanDatPath` setting points at a collection dat -- either one the user already has, or one fetched live via `download_eggman_dat` (see below). Either way, the dat is parsed as data; it is never executed. ReShade is the same pattern: `reShadeSourceDllPath`/`reShadeSourceDll32Path` must point at a DLL the user already has -- this plugin never downloads ReShade itself, only checks reshade.me for version drift.
+- Outside HyperHQ's own Socket.IO channel, the plugin makes three kinds of outbound network calls, all read-only or explicitly user-triggered: a fetch of the public teknogods/TeknoParrotUI profile-code list (fails soft to the local GameProfiles listing on any error); the optional Eggman/RomVault collection dat check/download, which only runs when the user explicitly triggers `check_eggman_dat_update` or `download_eggman_dat` (the download's release filename is sanitized via `Path.GetFileName` plus a containment check before being joined into a save path, and its `browser_download_url` is validated against a `github.com`/`githubusercontent.com` host pattern before being fetched); and the optional `check_reshade_update` version check against reshade.me, which never downloads anything, just compares version strings.
 
 ## Credits
 

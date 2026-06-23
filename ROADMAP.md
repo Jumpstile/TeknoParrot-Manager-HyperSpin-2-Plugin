@@ -95,18 +95,31 @@ Port `Invoke-CursorHideSetup` (tpm.ps1:2507). Pure profile XML field
 writes (PCSX2 cursor path fields per `Set-Pcsx2CursorPaths`, tpm.ps1:2241)
 -- no third-party downloads, no new permissions.
 
-### Phase 4 -- ReShade setup (Group A + one new read-only permission)
+### Phase 4 -- ReShade setup (Group A + one new read-only permission) -- DONE (v0.10.0)
 Port `Invoke-ReShadeSetup` + `Test-ReShadeDllSignature` +
-`Get-ReShadeLatestVersion`/`Get-ReShadeTargetInfo` (tpm.ps1:1300, 1229,
-1262, 1275). The 64/32-bit DLLs are user-supplied via a settings path
-(new `reShadeSourceDll`/`reShadeSourceDll32`, same "user already has it"
-pattern as `eggmanDatPath`) -- this plugin does not download ReShade.
-Auto-detects 32/64-bit per game, verifies the DLL's Authenticode
-signature before deploying (continues with a warning if unsigned, since
-the user supplied it themselves), and does one read-only GET to
-reshade.me to report version drift (add a `network`/`external-api`
-permission entry for this, mirroring the existing GitHub profile-list
-fetch -- not a Safety Notes boundary change).
+`Get-ReShadeLatestVersion`/`Get-ReShadeTargetInfo`/`Get-GameApiDll`/
+`Get-ExeArchitecture` (tpm.ps1:1300, 1229, 1262, 1275, 1105, 1132). The
+64/32-bit DLLs are user-supplied via a settings path
+(`reShadeSourceDllPath`/`reShadeSourceDll32Path`, same "user already has
+it" pattern as `eggmanDatPath`) -- this plugin does not download ReShade.
+Auto-detects 32/64-bit per game (PE Optional Header machine word) and
+graphics API (DirectX 9/11/12 or OpenGL, by scanning for known DLL
+imports) to pick the right destination DLL name, with OpenParrot
+subfolder and BudgieLoader (always opengl32.dll) special cases. Verifies
+the DLL's Authenticode signature before deploying (continues with a
+warning if unsigned/untrusted, since the user supplied it themselves) via
+the new `AuthenticodeExaminer` NuGet dependency (Windows-only, wraps
+native Windows trust-verification APIs -- pulled in a vulnerable
+transitive `System.Security.Cryptography.Xml` 8.0.1, pinned to 10.0.9 to
+fix). Does one read-only GET to reshade.me to report version drift, gated
+by a new `network`/`reshade-version-check` permission entry, mirroring
+the existing GitHub profile-list fetch -- not a Safety Notes boundary
+change. The interactive game-picker and preset-choice prompts from the
+original script don't apply to a non-interactive plugin -- replaced with
+an optional `gameCodes` filter in the action payload (default: every
+registered game) and settings-driven preset configuration
+(`reShadePresetPath` global, `reShadePresetsPath` for per-game overrides,
+same `<ProfileCode>.ini` naming convention as the original).
 
 ### Phase 5 -- dgVoodoo2 setup (Group A)
 Port `Invoke-DgVoodoo2Setup` + `Test-DgVoodoo2UpToDate` (tpm.ps1:1578,

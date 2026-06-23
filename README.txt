@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.1
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.10.0
   Author: Jumpstile
 ===============================================================================
 
@@ -78,6 +78,11 @@
     Intel) and automatically applies the matching fix setting to every
     game that supports one. Works entirely on your own computer -- no
     internet connection used or needed.
+
+  - ReShade setup. Installs ReShade (a free tool for sharper image,
+    CRT-style scanlines, richer colors, and more) into your games. You
+    supply the ReShade file yourself -- this plugin never downloads it.
+    Figures out the right way to install it for each game automatically.
 
   - Backup and restore. Backs up your game profiles before any risky
     change, and lets you restore an earlier backup -- with a safety
@@ -222,6 +227,42 @@
 
 
 -------------------------------------------------------------------------------
+  RESHADE SETUP
+-------------------------------------------------------------------------------
+
+  ReShade is a free, well-known tool that can make your games look
+  better -- sharper image, CRT-style scanlines, richer colors, decorative
+  borders, and more. It doesn't change your actual game files, and can be
+  removed at any time by deleting one file.
+
+  This plugin does NOT download ReShade for you. You need to get it
+  yourself first:
+
+    1. Go to https://reshade.me and download the installer.
+    2. Run it, and when asked, point it at any 64-bit game's .exe -- it
+       will create a DLL file in that game's folder.
+    3. Set that DLL as the "ReShade DLL, 64-bit" setting in this plugin.
+       (Optional: repeat with a 32-bit game if you have any, and set it
+       as "ReShade DLL, 32-bit".)
+
+  How to use it:
+
+    1. Click "Check ReShade For Updates" to confirm your file is genuine
+       and see if a newer version is available. Doesn't change anything.
+    2. Click "Preview ReShade Setup" to see which games would be changed.
+    3. Click "Apply ReShade Setup" to install it. Everything is backed up
+       first, and your game files themselves are never modified.
+
+  Once installed, launch a game and press the Home key to turn effects on
+  or off. To remove ReShade from a game, delete the one file it added to
+  that game's folder -- nothing else is touched.
+
+  The plugin automatically figures out which version of ReShade each game
+  needs (based on the game's graphics technology) and installs the right
+  one -- you don't need to know any of these details yourself.
+
+
+-------------------------------------------------------------------------------
   BACKING UP AND RESTORING
 -------------------------------------------------------------------------------
 
@@ -300,6 +341,12 @@
     by Eggman:  https://github.com/Eggmansworld/TeknoParrot
     This plugin does not create or maintain that data -- it only
     downloads and reads it.
+
+  - ReShade is developed by crosire and distributed under the BSD
+    3-Clause license:  https://reshade.me  /  https://github.com/crosire/reshade
+    This plugin does not develop, distribute, or download ReShade -- you
+    get it directly from the official site, and this plugin only installs
+    the file you already downloaded.
 
 
 -------------------------------------------------------------------------------
