@@ -120,11 +120,13 @@ The workflow restores, tests, publishes a Windows x64 self-contained single-file
 teknoparrot-manager-hyperspin2-plugin-v0.2.0-win-x64.zip
 ```
 
-The ZIP contains only the HyperHQ runtime files:
+The ZIP contains only the HyperHQ runtime files. `.md` docs are git/dev-facing
+only and are deliberately not packaged -- `README.txt`, `CHANGELOG.txt`, and
+`QUICKSTART.txt` are the newbie-friendly equivalents that ship instead:
 
 - `TeknoParrotManagerHyperSpin2Plugin.exe`
 - `plugin.json`
-- `CHANGELOG.md`
+- `README.txt`, `CHANGELOG.txt`, `QUICKSTART.txt`
 - `icon.jpg`
 - `Crosshairs/` (321 curated crosshair PNGs used by the crosshair deployment action)
 - Any additional root-level `*.json` files, if added later

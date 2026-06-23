@@ -1,0 +1,119 @@
+===============================================================================
+  TeknoParrot Manager - HyperSpin 2 Plugin  --  CHANGELOG
+  Author: Jumpstile
+===============================================================================
+
+  Most recent version first.
+
+
+-------------------------------------------------------------------------------
+  v0.7.0
+-------------------------------------------------------------------------------
+
+  Simplified the plugin's Settings screen. You now only need to fill in
+  your TeknoParrot folder and (if applicable) your games folder -- the
+  plugin already finds TeknoParrotUi.exe, UserProfiles, GameProfiles,
+  Icons, and your backup folder automatically from the TeknoParrot
+  folder, so those separate fields were removed from the everyday
+  Settings screen.
+
+  If you ever have a non-standard TeknoParrot setup and need to point one
+  of those at a different location, you can still do that from "Run
+  Setup Wizard" -> TeknoParrot Paths.
+
+  Every folder and file field now opens a proper Browse dialog instead of
+  needing you to type or paste a path by hand -- this applies to both the
+  Settings screen and the setup wizard.
+
+
+-------------------------------------------------------------------------------
+  v0.6.0
+-------------------------------------------------------------------------------
+
+  Renamed the plugin from "TeknoParrot Tools" to "TeknoParrot Manager -
+  HyperSpin 2 Plugin", to match this project's name. If you already had
+  the old version installed in HyperHQ, you will need to remove it and
+  add the new one -- HyperHQ treats them as different plugins.
+
+  Fixed the author name shown on the plugin's info page.
+
+
+-------------------------------------------------------------------------------
+  v0.5.0
+-------------------------------------------------------------------------------
+
+  New: a way to tell the plugin which of your two reference games is set
+  up correctly, if you have two reference games of the same control type
+  that disagree on their Input API setting. The plugin fixes the other
+  one to match. This only touches that one setting -- your actual button
+  bindings are never changed by it.
+
+  Simplified the wording used for control setup throughout the plugin so
+  it's easier to understand for first-time users (for example, "reference
+  game" instead of the more technical term "archetype").
+
+
+-------------------------------------------------------------------------------
+  v0.4.0
+-------------------------------------------------------------------------------
+
+  New: crosshair setup. Choose a Player 1 and Player 2 crosshair image
+  and the plugin installs them to every registered lightgun game.
+
+  Included 321 ready-made crosshair images, so most people won't need to
+  supply their own.
+
+  New: a preview page that lets you browse all included crosshair images
+  in your browser before choosing one.
+
+  New: a way to automatically hide the mouse cursor while playing
+  lightgun games.
+
+  Simplified the first-run setup wizard so the TeknoParrot folder paths
+  you rarely need to change are tucked away as "advanced" options.
+
+
+-------------------------------------------------------------------------------
+  v0.3.0
+-------------------------------------------------------------------------------
+
+  New: control setup. Configure the buttons for one game of a given type
+  (driving, lightgun, trackball, joystick, or button games) and the
+  plugin copies that setup to your other similar games automatically.
+  Your reference game's own settings are never changed by this.
+
+  New: a way to exclude specific games from control setup, or to
+  manually choose which reference game a specific game should copy from.
+
+  New: a device check that tells you which controller, lightgun, or
+  wheel you should use for each game type, based on what you have
+  plugged in. Informational only -- it does not change anything.
+
+
+-------------------------------------------------------------------------------
+  v0.2.0
+-------------------------------------------------------------------------------
+
+  Improved how the plugin tells apart games that share the same game
+  folder/program, using an optional collection file you can point it at.
+
+  Improved accuracy when fixing a game that has more than one possible
+  matching program file -- the plugin now checks each one in order
+  instead of getting confused when an unrelated file happened to share a
+  name.
+
+
+-------------------------------------------------------------------------------
+  v0.1.0
+-------------------------------------------------------------------------------
+
+  First release. Includes scanning your TeknoParrot profiles, setting up
+  missing game profiles automatically, adding your games to HyperHQ, and
+  backing up/restoring your profiles.
+
+  Added the first-run setup wizard and a health-check button.
+
+
+===============================================================================
+  Full documentation: README.txt   |   Setup guide: QUICKSTART.txt
+===============================================================================

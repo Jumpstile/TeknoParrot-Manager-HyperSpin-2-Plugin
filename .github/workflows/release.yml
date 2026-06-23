@@ -152,8 +152,12 @@ jobs:
           Copy-Item -LiteralPath $exePath -Destination (Join-Path $packageDir $exeName)
           Copy-Item -LiteralPath 'plugin.json' -Destination (Join-Path $packageDir 'plugin.json')
 
-          if (Test-Path -LiteralPath 'CHANGELOG.md') {
-            Copy-Item -LiteralPath 'CHANGELOG.md' -Destination (Join-Path $packageDir 'CHANGELOG.md')
+          $requiredTxtDocs = @('README.txt', 'CHANGELOG.txt', 'QUICKSTART.txt')
+          foreach ($txtDoc in $requiredTxtDocs) {
+            if (-not (Test-Path -LiteralPath $txtDoc)) {
+              throw "Package is missing required doc: $txtDoc"
+            }
+            Copy-Item -LiteralPath $txtDoc -Destination (Join-Path $packageDir $txtDoc)
           }
 
           $jsonFiles = Get-ChildItem -Path . -File -Filter '*.json' |
@@ -194,10 +198,6 @@ jobs:
             throw 'Package is missing plugin.json.'
           }
 
-          if (-not (Test-Path -LiteralPath (Join-Path $packageDir 'CHANGELOG.md'))) {
-            throw 'Package is missing CHANGELOG.md referenced by plugin.json.'
-          }
-
           Get-Content -Raw -Path (Join-Path $packageDir 'plugin.json') | ConvertFrom-Json | Out-Null
 
           if (Test-Path -LiteralPath $packagePath) {
@@ -221,7 +221,7 @@ jobs:
           Package contents:
           - `TeknoParrotManagerHyperSpin2Plugin.exe`
           - `plugin.json`
-          - `CHANGELOG.md`
+          - `README.txt`, `CHANGELOG.txt`, `QUICKSTART.txt`
           - Plugin icon files
           - `Crosshairs/` (321 curated crosshair PNGs for lightgun setup)
 

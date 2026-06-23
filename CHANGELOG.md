@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0
+
+- Simplify the plugin Settings screen: removed `executablePath`, `userProfilesPath`, `gameProfilesPath`, `iconsPath`, and `backupPath` from `plugin.json`'s top-level `settings` array. All five are pure subfolder overrides of `teknoparrotRootPath` (`TeknoParrotUi.exe`, `UserProfiles`, `GameProfiles`, `Icons`, and `Backups/HyperHQ` respectively) that `Program.cs`'s `ResolvePath`/`ResolveRootPath` already auto-derive when left unset -- nothing changed in that resolution logic, only what the generic Settings page shows. `gamesRootPath` stays, since it points at wherever the user's extracted games actually live and can't be reliably guessed from the TeknoParrot folder.
+- These five settings remain settable for non-standard setups via "Run Setup Wizard" -> TeknoParrot Paths, which already labels them "(advanced override)" (since v0.4.0) and writes to the same settings store as the Settings page.
+- Switch every folder/file path field in `plugin.json` (both the Settings screen and the wizard's TeknoParrot Paths step) from plain `string` to HyperHQ's documented `directory`/`file` field types, so HyperHQ shows a native browse dialog instead of requiring the user to type a path by hand. `file`-typed fields (`eggmanDatPath`, `controlOverridesPath`, `executablePath`) also set `validation.fileTypes` to filter the dialog to the relevant extension(s).
+
 ## 0.6.0
 
 - **Breaking:** renamed the plugin from "TeknoParrot Tools" (id `teknoparrot-tools`) to "TeknoParrot Manager - HyperSpin 2 Plugin" (id `teknoparrot-manager-hyperspin2-plugin`) to match this repository's actual name. Any existing HyperHQ installation will need to remove and re-add the plugin, since HyperHQ identifies plugins by id. The C# project/namespace, test project, executable filename (`TeknoParrotManagerHyperSpin2Plugin.exe`), and release ZIP filename prefix were all renamed to match.

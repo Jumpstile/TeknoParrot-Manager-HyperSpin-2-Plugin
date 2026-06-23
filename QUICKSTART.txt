@@ -1,0 +1,169 @@
+===============================================================================
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.7.0  --  QUICK START
+  Author: Jumpstile
+===============================================================================
+
+  Sets up TeknoParrot games inside HyperSpin 2 / HyperHQ, copies controls
+  across games of the same type, and deploys lightgun crosshairs.
+  Full details: README.txt.
+
+
+  REQUIREMENTS
+  ------------
+  - HyperSpin 2 / HyperHQ installed and running.
+  - TeknoParrot installed, with TeknoParrotUi.exe run at least once (so it
+    has downloaded its GameProfiles folder).
+
+
+  BEFORE YOU START
+  ----------------
+  - Run TeknoParrotUi.exe once so it downloads its game profiles.
+  - Have at least one TeknoParrot game already extracted/installed.
+
+
+  TYPICAL FIRST RUN
+  ------------------
+  1. Install the plugin into HyperHQ (see INSTALL THE PLUGIN below).
+  2. Run the Setup Wizard.
+  3. Run Health Check to see how your library looks.
+  4. Preview Registration, then Register Games.
+  5. In TeknoParrotUI, bind controls for one game of each type you play.
+  6. Preview Control Setup, then Set Up Controls.
+  7. Preview Sync, then Sync Games to add your games to HyperHQ.
+  8. Launch one game from HyperHQ and test it.
+
+
+  INSTALL THE PLUGIN
+  -------------------
+  1. Download the plugin ZIP from the Releases page.
+  2. Open your HyperHQ Plugins folder.
+  3. Extract the ZIP into its own folder inside Plugins -- it should end
+     up as:
+
+       Plugins\TeknoParrotManagerHyperSpin2Plugin\(files here)
+
+     Do not extract it loose into the Plugins folder itself.
+
+  4. Restart HyperHQ (or use "reload plugins" if your build has it).
+  5. The plugin now appears in your HyperHQ plugin list.
+
+
+  RUN THE SETUP WIZARD
+  ---------------------
+  1. Open the plugin's page inside HyperHQ.
+  2. Click "Run Setup Wizard".
+  3. Click Browse and point it at your TeknoParrot folder (the one
+     containing TeknoParrotUi.exe) -- the wizard checks it and fills in
+     the rest of the paths automatically.
+  4. Follow the remaining steps. Each one explains what it's asking for in
+     plain language.
+
+
+  CHECK YOUR SETUP
+  -----------------
+  Click "Health Check" any time to see how many games are working,
+  missing a profile, or have a broken path. Read-only -- changes nothing.
+
+
+  REGISTER YOUR GAMES
+  --------------------
+  1. Click "Preview Registration" to see what can be safely registered
+     without changing anything yet.
+  2. Review the list, then click "Register Games" to create the missing
+     profiles for real.
+  3. A game not listed usually means the plugin couldn't tell which game
+     it is with confidence -- set that one up by hand in TeknoParrot.
+
+
+  FIX BROKEN GAME PATHS (IF NEEDED)
+  -----------------------------------
+  1. Click "Preview Repair" to see which broken paths can be safely fixed.
+  2. Click "Repair Game Paths" to apply it.
+  3. Ambiguous cases (more than one possible match) are left alone -- fix
+     those by hand in TeknoParrot.
+
+
+  SET UP CONTROLS (OPTIONAL BUT RECOMMENDED)
+  --------------------------------------------
+  1. In TeknoParrot, fully bind ONE game of each control type you use.
+     Bind everything: buttons, axes, Test, Service, Coin, Start.
+
+     Good games to bind first:
+       Fighting / buttons   Street Fighter III, Tekken 7
+       Driving              Daytona Championship USA, Initial D
+       Lightgun             House of the Dead 4, Aliens Extermination
+       Trackball            Golden Tee Live, Silver Strike Bowling
+
+  2. Click "Device Survey" for a recommendation on which device to use
+     for each game type.
+
+  3. Click "Preview Control Setup" to see which games will receive copied
+     controls and from which reference game.
+
+  4. Click "Set Up Controls" to apply it.
+
+  5. Launch ONE updated game and test it before trusting the rest.
+
+  Your reference games are never changed by this step -- only the other
+  games that were still unbound.
+
+
+  SET UP CROSSHAIRS (LIGHTGUN GAMES ONLY, OPTIONAL)
+  ----------------------------------------------------
+  1. Click "Preview Crosshairs" to browse the 321 included designs in
+     your browser.
+  2. Pick a Player 1 and Player 2 design.
+  3. Click "Deploy Crosshairs" to install them to all lightgun games.
+  4. Optionally click "Hide Cursor" to hide the mouse pointer during
+     lightgun play.
+
+  Run this again any time to change your crosshair design.
+
+
+  ADD YOUR GAMES TO HYPERHQ
+  ---------------------------
+  1. Click "Preview Sync" to see what will be added to your library.
+  2. Click "Sync Games" to add the "Arcade (TeknoParrot)" section with all
+     your registered games.
+
+
+  BACKING UP AND RESTORING
+  --------------------------
+  - Click "Backup Profiles" any time to save your current game profiles.
+  - Click "Restore Backup" to bring back an earlier one. Your current
+    profiles are backed up automatically first.
+
+
+  QUICK FIXES
+  ------------
+  Game won't launch          Open TeknoParrotUI and point the profile to
+                             the correct .exe, then re-run Repair Game
+                             Paths in the plugin.
+
+  Game not registered         Run Health Check, then Preview Registration
+                             -- it usually means the plugin couldn't match
+                             it with confidence. Register it by hand in
+                             TeknoParrotUI.
+
+  Controls wrong after        Restore from backup, or fix the bindings on
+  control setup                your reference game in TeknoParrotUI and
+                             re-run control setup.
+
+  Game not showing up in       Run Preview Sync, then Sync Games. Make
+  HyperHQ                     sure the game was registered first.
+
+  Wrong reference game        Use the controlOverridesPath setting's
+  matched                     forceArchetype entry to pin the game to the
+                             correct reference game.
+
+  Full troubleshooting: README.txt.
+
+
+  WHAT CHANGED RECENTLY?
+  ------------------------
+  See CHANGELOG.txt for the full version history.
+
+
+===============================================================================
+  Full documentation: README.txt
+===============================================================================
