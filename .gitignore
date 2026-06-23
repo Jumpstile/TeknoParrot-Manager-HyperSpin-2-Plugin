@@ -1,13 +1,20 @@
 # Distribution ZIPs -- these go to GitHub Releases, not git history
 *.zip
 
+# .NET build output
+bin/
+obj/
+artifacts/
+TestResults/
+
 # Local instruction file -- contains local paths, not for public repos
 CLAUDE.md
 
 # User-specific generated files
 config.json
 *.log
-
-# .NET build output
-bin/
-obj/
+*.user
+*.suo
+.vs/
+.idea/
+.vscode/

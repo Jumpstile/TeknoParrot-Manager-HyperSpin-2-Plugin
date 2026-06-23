@@ -17,6 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TeknoParrotToolsPlugin.csproj" />
+    <ProjectReference Include="..\..\src\TeknoParrotToolsPlugin\TeknoParrotToolsPlugin.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">TeknoParrot Tools</title>
+  <desc id="desc">A neon arcade cabinet badge for the HyperHQ TeknoParrot plugin.</desc>
+  <defs>
+    <linearGradient id="panel" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="0.5" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="76" y1="64" x2="180" y2="144" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#06111F"/>
+  <path d="M74 32h108l22 184H52L74 32Z" fill="url(#panel)"/>
+  <path d="M88 56h80l10 94H78L88 56Z" fill="url(#screen)"/>
+  <path d="M92 72h72l5 56H86l6-56Z" fill="#0B1220"/>
+  <path d="M100 88h56" stroke="#67E8F9" stroke-width="8" stroke-linecap="round"/>
+  <path d="M108 110h40" stroke="#2DD4BF" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="98" cy="178" r="10" fill="#F97316"/>
+  <circle cx="128" cy="178" r="10" fill="#FACC15"/>
+  <circle cx="158" cy="178" r="10" fill="#22C55E"/>
+  <path d="M88 210h80" stroke="#E0F2FE" stroke-width="10" stroke-linecap="round"/>
+</svg>

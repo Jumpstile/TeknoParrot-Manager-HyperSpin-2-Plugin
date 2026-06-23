@@ -8,7 +8,7 @@ public class PluginManifestTests
     [Fact]
     public void Manifest_declares_optional_wizard_and_import_actions()
     {
-        var manifestPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "plugin.json"));
+        var manifestPath = FindManifestPath();
         using var document = JsonDocument.Parse(File.ReadAllText(manifestPath));
         var root = document.RootElement;
 
@@ -55,5 +55,22 @@ public class PluginManifestTests
         Assert.Equal("async-action", steps["preview_sync"].GetProperty("type").GetString());
         Assert.Equal("async-action", steps["sync_games"].GetProperty("type").GetString());
         Assert.Equal("Finish", steps["finish"].GetProperty("buttonText").GetString());
+    }
+
+    private static string FindManifestPath()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "plugin.json");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new FileNotFoundException("Could not find plugin.json from the test output directory.");
     }
 }

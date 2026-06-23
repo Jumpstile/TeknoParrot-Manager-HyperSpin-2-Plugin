@@ -1,0 +1,244 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Optional version. Must match plugin.json when provided.
+        required: false
+        type: string
+      draft:
+        description: Create the GitHub release as a draft.
+        required: false
+        default: false
+        type: boolean
+      prerelease:
+        description: Mark the GitHub release as a prerelease.
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: 10.0.x
+  PROJECT_PATH: src/TeknoParrotToolsPlugin/TeknoParrotToolsPlugin.csproj
+  SOLUTION_PATH: TeknoParrotHyperHQPlugin.sln
+  RUNTIME_ID: win-x64
+
+jobs:
+  release:
+    name: Build release package
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Read plugin metadata
+        id: metadata
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifest = Get-Content -Raw -Path 'plugin.json' | ConvertFrom-Json
+
+          if ([string]::IsNullOrWhiteSpace($manifest.id)) {
+            throw 'plugin.json is missing id.'
+          }
+
+          if ([string]::IsNullOrWhiteSpace($manifest.version)) {
+            throw 'plugin.json is missing version.'
+          }
+
+          $windowsExe = $manifest.executableProviders.windows
+          if ([string]::IsNullOrWhiteSpace($windowsExe)) {
+            if ($manifest.executable -is [string]) {
+              $windowsExe = $manifest.executable
+            } elseif ($manifest.executable.windows) {
+              $windowsExe = $manifest.executable.windows
+            }
+          }
+
+          if ([string]::IsNullOrWhiteSpace($windowsExe)) {
+            throw 'plugin.json is missing a Windows executable name.'
+          }
+
+          $version = $manifest.version
+          $requestedVersion = '${{ inputs.version }}'
+          if (-not [string]::IsNullOrWhiteSpace($requestedVersion) -and $requestedVersion -ne $version) {
+            throw "Workflow input version '$requestedVersion' does not match plugin.json version '$version'."
+          }
+
+          if ('${{ github.event_name }}' -eq 'push') {
+            $tagVersion = '${{ github.ref_name }}' -replace '^v', ''
+            if ($tagVersion -ne $version) {
+              throw "Tag version '$tagVersion' does not match plugin.json version '$version'."
+            }
+          }
+
+          $isDraft = 'false'
+          $isPrerelease = 'false'
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $isDraft = if ('${{ inputs.draft }}' -eq 'true') { 'true' } else { 'false' }
+            $isPrerelease = if ('${{ inputs.prerelease }}' -eq 'true') { 'true' } else { 'false' }
+          }
+
+          $packageName = "$($manifest.id)-v$version-win-x64.zip"
+          "plugin_id=$($manifest.id)" >> $env:GITHUB_OUTPUT
+          "plugin_name=$($manifest.name)" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag_name=v$version" >> $env:GITHUB_OUTPUT
+          "windows_exe=$windowsExe" >> $env:GITHUB_OUTPUT
+          "package_name=$packageName" >> $env:GITHUB_OUTPUT
+          "draft=$isDraft" >> $env:GITHUB_OUTPUT
+          "prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION_PATH }} --no-restore --configuration Release
+
+      - name: Publish single-file executable
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishDir = Join-Path $PWD 'artifacts\publish'
+          if (Test-Path $publishDir) {
+            Remove-Item -LiteralPath $publishDir -Recurse -Force
+          }
+
+          dotnet publish $env:PROJECT_PATH `
+            --configuration Release `
+            --runtime $env:RUNTIME_ID `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:Version=${{ steps.metadata.outputs.version }} `
+            --output $publishDir
+
+      - name: Create HyperHQ package
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishDir = Join-Path $PWD 'artifacts\publish'
+          $packageDir = Join-Path $PWD 'artifacts\package'
+          $packagePath = Join-Path $PWD '${{ steps.metadata.outputs.package_name }}'
+          $exeName = '${{ steps.metadata.outputs.windows_exe }}'
+
+          if (Test-Path $packageDir) {
+            Remove-Item -LiteralPath $packageDir -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $packageDir | Out-Null
+
+          $exePath = Join-Path $publishDir $exeName
+          if (-not (Test-Path -LiteralPath $exePath)) {
+            throw "Published executable was not found: $exePath"
+          }
+
+          Copy-Item -LiteralPath $exePath -Destination (Join-Path $packageDir $exeName)
+          Copy-Item -LiteralPath 'plugin.json' -Destination (Join-Path $packageDir 'plugin.json')
+
+          if (Test-Path -LiteralPath 'CHANGELOG.md') {
+            Copy-Item -LiteralPath 'CHANGELOG.md' -Destination (Join-Path $packageDir 'CHANGELOG.md')
+          }
+
+          $jsonFiles = Get-ChildItem -Path . -File -Filter '*.json' |
+            Where-Object { $_.Name -ne 'plugin.json' }
+          foreach ($jsonFile in $jsonFiles) {
+            Copy-Item -LiteralPath $jsonFile.FullName -Destination (Join-Path $packageDir $jsonFile.Name)
+          }
+
+          $iconPatterns = @('icon.png', 'icon.jpg', 'icon.jpeg', 'icon.gif', 'icon.svg')
+          $copiedIconCount = 0
+          foreach ($iconPattern in $iconPatterns) {
+            $iconFiles = Get-ChildItem -Path . -File -Filter $iconPattern -ErrorAction SilentlyContinue
+            foreach ($iconFile in $iconFiles) {
+              Copy-Item -LiteralPath $iconFile.FullName -Destination (Join-Path $packageDir $iconFile.Name)
+              $copiedIconCount++
+            }
+          }
+
+          if (Test-Path -LiteralPath 'Icons') {
+            Copy-Item -LiteralPath 'Icons' -Destination (Join-Path $packageDir 'Icons') -Recurse
+            $copiedIconCount++
+          }
+
+          if ($copiedIconCount -eq 0) {
+            throw 'No plugin icon files were found. Add icon.png, icon.svg, or an Icons folder.'
+          }
+
+          $packageExeFiles = Get-ChildItem -Path $packageDir -File -Filter '*.exe'
+          if ($packageExeFiles.Count -ne 1) {
+            throw "Expected exactly one executable in the package, found $($packageExeFiles.Count)."
+          }
+
+          if (-not (Test-Path -LiteralPath (Join-Path $packageDir 'plugin.json'))) {
+            throw 'Package is missing plugin.json.'
+          }
+
+          if (-not (Test-Path -LiteralPath (Join-Path $packageDir 'CHANGELOG.md'))) {
+            throw 'Package is missing CHANGELOG.md referenced by plugin.json.'
+          }
+
+          Get-Content -Raw -Path (Join-Path $packageDir 'plugin.json') | ConvertFrom-Json | Out-Null
+
+          if (Test-Path -LiteralPath $packagePath) {
+            Remove-Item -LiteralPath $packagePath -Force
+          }
+
+          Compress-Archive -Path (Join-Path $packageDir '*') -DestinationPath $packagePath -Force
+          "package_path=$packagePath" >> $env:GITHUB_OUTPUT
+
+      - name: Write release notes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packageName = '${{ steps.metadata.outputs.package_name }}'
+          $version = '${{ steps.metadata.outputs.version }}'
+          $notes = @"
+          ## TeknoParrot Tools v$version
+
+          Download `$packageName` and extract it into the HyperHQ plugins directory.
+
+          Package contents:
+          - `TeknoParrotToolsPlugin.exe`
+          - `plugin.json`
+          - `CHANGELOG.md`
+          - Plugin icon files
+
+          The executable is published as a Windows x64 self-contained single-file build.
+          "@
+
+          $notes | Set-Content -Path 'release-notes.md' -Encoding utf8
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.metadata.outputs.tag_name }}
+          name: ${{ steps.metadata.outputs.plugin_name }} v${{ steps.metadata.outputs.version }}
+          body_path: release-notes.md
+          files: ${{ steps.package.outputs.package_path }}
+          draft: ${{ steps.metadata.outputs.draft }}
+          prerelease: ${{ steps.metadata.outputs.prerelease }}
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.metadata.outputs.package_name }}
+          path: ${{ steps.package.outputs.package_path }}
+          if-no-files-found: error
+          retention-days: 14

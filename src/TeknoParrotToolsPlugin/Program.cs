@@ -2050,6 +2050,8 @@ public static class TeknoParrotProfileScanner
     public static async Task<HashSet<string>> FetchProfileCodeSetAsync(
         HttpClient http, string gameProfilesPath, Action<string>? log = null, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(http);
+
         var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var loaded = false;
         var branch = "master";

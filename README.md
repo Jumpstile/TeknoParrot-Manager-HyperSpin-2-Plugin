@@ -1,8 +1,10 @@
-# TeknoParrot HyperHQ Plugin
+# TeknoParrot Manager HyperSpin 2 Plugin
 
-Standalone HyperHQ plugin for TeknoParrot profile maintenance and HyperHQ import. This project is meant to be shared outside the `HyperHQ-Plugins` monorepo as its own buildable .NET project.
+Standalone HyperSpin 2 / HyperHQ plugin for TeknoParrot profile maintenance and HyperHQ import.
 
-This plugin was built after reviewing [Jumpstile/teknoparrot-manager](https://github.com/Jumpstile/teknoparrot-manager). It does not copy or bundle that repository's code. The goal is to complement TeknoParrot and TeknoParrot Manager by exposing the HyperHQ-specific pieces as an optional plugin instead of building this behavior directly into HyperHQ.
+This repository packages the TeknoParrot tools plugin as its own buildable .NET project with a GitHub Actions release flow. It is intended to complement TeknoParrot and TeknoParrot Manager by exposing the HyperHQ-specific profile and import behavior as an optional plugin instead of baking that behavior directly into HyperHQ.
+
+The implementation was built after reviewing [Jumpstile/teknoparrot-manager](https://github.com/Jumpstile/teknoparrot-manager). It does not copy or bundle that repository's source code.
 
 ## What It Does
 
@@ -18,9 +20,9 @@ This plugin was built after reviewing [Jumpstile/teknoparrot-manager](https://gi
 
 ## Relationship To TeknoParrot Manager
 
-The source repository that motivated the review includes many broader Windows setup and game-modification workflows. This plugin intentionally keeps the HyperHQ surface narrower:
+TeknoParrot Manager includes many broader Windows setup and game-modification workflows. This plugin intentionally keeps the HyperHQ surface narrower:
 
-- Included: profile discovery, missing profile registration, unique path repair, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
+- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
 - Not included in this initial plugin: control propagation, ReShade installation, dgVoodoo2 setup, GPU fixes, FFB setup, Postgres setup, BepInEx deployment, crosshair deployment, and other binary/game-modification operations.
 
 That boundary is deliberate. HyperHQ should remain the launcher and library manager, while the plugin extends TeknoParrot support where HyperHQ needs structured profile and import behavior.
@@ -38,23 +40,27 @@ That boundary is deliberate. HyperHQ should remain the launcher and library mana
 
 ```text
 .
-|-- TeknoParrotToolsPlugin.csproj
 |-- TeknoParrotHyperHQPlugin.sln
-|-- Program.cs
 |-- plugin.json
+|-- icon.svg
 |-- CHANGELOG.md
-|-- shared/
-|   |-- HyperImportModels.cs
-|   `-- PluginSocketIOClient.cs
-`-- Tests/
-    |-- TeknoParrotToolsPlugin.Tests.csproj
-    |-- PluginManifestTests.cs
-    |-- TeknoParrotFixture.cs
-    |-- TeknoParrotImportPayloadTests.cs
-    `-- TeknoParrotProfileScannerTests.cs
+|-- src/
+|   |-- TeknoParrotToolsPlugin/
+|   |   |-- TeknoParrotToolsPlugin.csproj
+|   |   `-- Program.cs
+|   `-- HyperHQPluginCommon/
+|       |-- HyperImportModels.cs
+|       `-- PluginSocketIOClient.cs
+`-- tests/
+    `-- TeknoParrotToolsPlugin.Tests/
+        |-- TeknoParrotToolsPlugin.Tests.csproj
+        |-- PluginManifestTests.cs
+        |-- TeknoParrotFixture.cs
+        |-- TeknoParrotImportPayloadTests.cs
+        `-- TeknoParrotProfileScannerTests.cs
 ```
 
-The `shared` folder contains the small HyperHQ plugin transport/import contract needed to run this project outside the monorepo.
+The `src` folder contains all buildable plugin source. `src/HyperHQPluginCommon` contains the small HyperHQ plugin transport/import contract needed to run this project as a standalone repository.
 
 ## Build And Test
 
@@ -65,17 +71,50 @@ Requirements:
 Commands:
 
 ```powershell
-dotnet restore .\TeknoParrotToolsPlugin.csproj
-dotnet build .\TeknoParrotToolsPlugin.csproj
-dotnet test .\Tests\TeknoParrotToolsPlugin.Tests.csproj
-dotnet run --project .\TeknoParrotToolsPlugin.csproj -- --version
+dotnet restore .\TeknoParrotHyperHQPlugin.sln
+dotnet build .\TeknoParrotHyperHQPlugin.sln
+dotnet test .\tests\TeknoParrotToolsPlugin.Tests\TeknoParrotToolsPlugin.Tests.csproj
+dotnet run --project .\src\TeknoParrotToolsPlugin\TeknoParrotToolsPlugin.csproj -- --version
 ```
 
 Basic stdio smoke test:
 
 ```powershell
-'{"id":"status","method":"execute","data":{"action":"get_status"}}' | dotnet run --project .\TeknoParrotToolsPlugin.csproj --no-build
+'{"id":"status","method":"execute","data":{"action":"get_status"}}' | dotnet run --project .\src\TeknoParrotToolsPlugin\TeknoParrotToolsPlugin.csproj --no-build
 ```
+
+## GitHub Releases
+
+The repository includes a GitHub Actions workflow at `.github/workflows/release.yml`.
+
+It runs on:
+
+- Version tags shaped like `v0.1.0`
+- Manual `workflow_dispatch`
+
+The workflow uses `plugin.json` as the source of truth. On tag builds, the tag version must match the `version` field in `plugin.json` or the workflow fails.
+
+Release command:
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The workflow restores, tests, publishes a Windows x64 self-contained single-file executable, validates package contents, creates a GitHub release, and uploads:
+
+```text
+teknoparrot-tools-v0.2.0-win-x64.zip
+```
+
+The ZIP contains only the HyperHQ runtime files:
+
+- `TeknoParrotToolsPlugin.exe`
+- `plugin.json`
+- `CHANGELOG.md`
+- `icon.svg`
+- Any additional root-level `*.json` files, if added later
+- Any `Icons/` folder, if added later
 
 ## HyperHQ Runtime
 

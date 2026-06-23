@@ -14,17 +14,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Tests\**\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>TeknoParrotToolsPlugin.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="plugin.json">
+    <Compile Include="..\HyperHQPluginCommon\PluginSocketIOClient.cs" Link="PluginSocketIOClient.cs" />
+    <Compile Include="..\HyperHQPluginCommon\HyperImportModels.cs" Link="HyperImportModels.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\plugin.json" Link="plugin.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
