@@ -2,6 +2,8 @@
 
 ![TeknoParrot Manager - HyperSpin 2 Plugin](banner.jpg)
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-Buy%20Me%20a%20Coffee-FFDD00?logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/jumpstile)
+
 Standalone HyperSpin 2 / HyperHQ plugin for TeknoParrot profile maintenance and HyperHQ import.
 
 This repository packages the TeknoParrot tools plugin as its own buildable .NET project with a GitHub Actions release flow. It is intended to complement TeknoParrot and TeknoParrot Manager by exposing the HyperHQ-specific profile and import behavior as an optional plugin instead of baking that behavior directly into HyperHQ.
@@ -188,3 +190,7 @@ Supported execute actions:
 ## Credits
 
 - The Eggman/RomVault collection dat (used to resolve shared-executable registration matches, and downloadable directly from the plugin) is community-maintained by **Eggman** -- https://github.com/Eggmansworld/TeknoParrot. This plugin does not create or maintain that data, just fetches and reads it.
+
+## Support This Project
+
+This plugin is free to use. If it's been useful to you and you'd like to support continued development: [Buy Me a Coffee](https://buymeacoffee.com/jumpstile). Completely optional -- never required to use any feature of this plugin.

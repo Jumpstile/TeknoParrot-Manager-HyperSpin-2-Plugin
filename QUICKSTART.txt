@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.1  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 

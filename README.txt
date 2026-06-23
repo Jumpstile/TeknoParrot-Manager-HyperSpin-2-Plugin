@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.9.1
   Author: Jumpstile
 ===============================================================================
 
@@ -300,6 +300,18 @@
     by Eggman:  https://github.com/Eggmansworld/TeknoParrot
     This plugin does not create or maintain that data -- it only
     downloads and reads it.
+
+
+-------------------------------------------------------------------------------
+  SUPPORT THIS PROJECT
+-------------------------------------------------------------------------------
+
+  This plugin is free to use. If it's been useful to you and you'd like
+  to support continued development, you can buy the author a coffee:
+
+    https://buymeacoffee.com/jumpstile
+
+  Completely optional -- never required to use any feature of this plugin.
 
 
 ===============================================================================

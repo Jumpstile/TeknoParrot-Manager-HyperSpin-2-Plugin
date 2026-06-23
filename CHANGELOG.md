@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Add a "Buy Me a Coffee" sponsor link (https://buymeacoffee.com/jumpstile) to README.md/README.txt and the wiki Home page. `.github/FUNDING.yml` already had `buy_me_a_coffee: jumpstile` configured, so GitHub's native Sponsor button already pointed here -- this just makes it visible to anyone reading the docs directly. Entirely optional, never required to use the plugin.
+
 ## 0.9.0
 
 - Add GPU compatibility fix (ROADMAP.md Phase 6), porting the original PowerShell tool's `Get-DetectedGpuVendor`/`Get-GpuFixFieldNames`/`Test-GpuFixUpToDate`/`Invoke-GpuFixSetup`. Two new actions: `preview_gpu_fix` (dry-run) and `apply_gpu_fix`. Auto-detects your GPU vendor (AMD/NVIDIA/Intel) via a local WMI query (`Win32_VideoController`, Windows-only -- no-ops to "undetected" on Linux) and toggles the matching vendor-fix field in every registered profile that has one. Field names are discovered by scanning `GameProfiles` at runtime (seeded with the original tool's known field names, extended with whatever else is found), so newly added games with new fix fields are covered without a plugin update. Pure local WMI detection plus profile XML field edits -- no network calls, no new `plugin.json` permission needed (Group A per ROADMAP.md). An explicit `vendor` override can be passed in the action payload for when auto-detection fails or isn't on Windows; the plugin never guesses a vendor on its own.
