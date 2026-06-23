@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.10.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.11.0
   Author: Jumpstile
 ===============================================================================
 
@@ -83,6 +83,11 @@
     CRT-style scanlines, richer colors, and more) into your games. You
     supply the ReShade file yourself -- this plugin never downloads it.
     Figures out the right way to install it for each game automatically.
+
+  - dgVoodoo2 setup. Fixes older games that crash or show a black screen
+    on modern PCs. You supply the files yourself -- this plugin never
+    downloads them. Automatically figures out which games need it and
+    installs only what each one needs.
 
   - Backup and restore. Backs up your game profiles before any risky
     change, and lets you restore an earlier backup -- with a safety
@@ -263,6 +268,36 @@
 
 
 -------------------------------------------------------------------------------
+  DGVOODOO2 SETUP
+-------------------------------------------------------------------------------
+
+  Some older arcade games crash or show a black screen on modern PCs and
+  graphics cards, because of how they were originally written to talk to
+  the hardware. dgVoodoo2 is a free tool that fixes this by translating
+  those old calls into something your modern graphics card understands.
+  It doesn't change your actual game files, and can be removed at any
+  time by deleting the files it added.
+
+  This plugin does NOT download dgVoodoo2 for you. You need to get it
+  yourself first:
+
+    1. Go to https://dege.freeweb.hu/dgVoodoo2/dgVoodoo2/ and download it.
+    2. Put the files somewhere on your computer.
+    3. Set that folder as the "dgVoodoo2 Folder" setting in this plugin.
+
+  How to use it:
+
+    1. Click "Preview dgVoodoo2 Setup" to see which games would be fixed.
+       The plugin automatically figures out which of your games need it.
+    2. Click "Apply dgVoodoo2 Setup" to install it. Everything is backed
+       up first, and your game files themselves are never modified.
+
+  By default, only games that actually need this are touched -- games
+  that already work fine are left alone. To uninstall, delete the files
+  it added to a game's folder; nothing else is changed.
+
+
+-------------------------------------------------------------------------------
   BACKING UP AND RESTORING
 -------------------------------------------------------------------------------
 
@@ -347,6 +382,11 @@
     This plugin does not develop, distribute, or download ReShade -- you
     get it directly from the official site, and this plugin only installs
     the file you already downloaded.
+
+  - dgVoodoo2 is developed by Dege:  https://dege.freeweb.hu/dgVoodoo2/dgVoodoo2/
+    This plugin does not develop, distribute, or download dgVoodoo2 -- you
+    get it directly from the official site, and this plugin only installs
+    the files you already downloaded.
 
 
 -------------------------------------------------------------------------------

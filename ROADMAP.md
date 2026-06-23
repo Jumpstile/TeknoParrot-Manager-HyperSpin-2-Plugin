@@ -121,11 +121,19 @@ registered game) and settings-driven preset configuration
 (`reShadePresetPath` global, `reShadePresetsPath` for per-game overrides,
 same `<ProfileCode>.ini` naming convention as the original).
 
-### Phase 5 -- dgVoodoo2 setup (Group A)
-Port `Invoke-DgVoodoo2Setup` + `Test-DgVoodoo2UpToDate` (tpm.ps1:1578,
-1563). DirectX 8/DirectDraw/Glide-to-DX11/12 interception layer. DLLs are
-user-supplied via a settings path (`dgVoodoo2SourceDir`); no network
-calls anywhere in this phase.
+### Phase 5 -- dgVoodoo2 setup (Group A) -- DONE (v0.11.0)
+Port `Invoke-DgVoodoo2Setup` + `Get-GameLegacyApi` + `Test-DgVoodoo2UpToDate`
+(tpm.ps1:1629, 1579, 1614). DirectX 8/DirectDraw/Glide-to-DX11/12
+interception layer. DLLs are user-supplied via a settings path
+(`dgVoodoo2SourcePath`); no network calls anywhere in this phase, so no
+new `plugin.json` permission was needed. Detects legacy API usage by
+scanning each game's exe for known DLL imports, deploys only the DLL(s)
+that API needs (falls back to every available DLL if none of the needed
+ones are bundled, or if a game is explicitly named via `gameCodes`
+despite no detected need -- same "benefit of the doubt" behavior as the
+original script's manual-pick path). Existing deployed DLLs are never
+overwritten; a per-game `dgVoodoo2PresetsPath` config always overwrites,
+the global conf never does -- same convention as ReShade's presets.
 
 ### Phase 6 -- GPU compatibility fix (Group A, despite the numbering -- corrected) -- DONE (v0.9.0)
 Port `Invoke-GpuFixSetup` + `Get-DetectedGpuVendor` +

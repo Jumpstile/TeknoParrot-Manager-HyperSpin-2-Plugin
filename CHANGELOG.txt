@@ -7,6 +7,33 @@
 
 
 -------------------------------------------------------------------------------
+  v0.11.0
+-------------------------------------------------------------------------------
+
+  Added dgVoodoo2 support. Some older games crash or show a black screen
+  on modern PCs because of how they talk to your graphics card. dgVoodoo2
+  is a free tool that fixes this. You provide the files yourself; the
+  plugin figures out which ones each game needs and installs them.
+
+  New buttons:
+
+    Preview dgVoodoo2 Setup   -- shows which games would be fixed.
+    Apply dgVoodoo2 Setup     -- installs it. Everything is backed up
+                                 first, and your game files themselves
+                                 are never modified.
+
+  New settings (optional):
+
+    dgVoodoo2 Folder                    -- the folder with your dgVoodoo2
+                                            files.
+    Per-Game dgVoodoo2 Settings Folder  -- advanced: different settings
+                                            for one specific game.
+
+  By default, only games that actually need this get touched -- the
+  plugin automatically figures out which ones those are.
+
+
+-------------------------------------------------------------------------------
   v0.10.0
 -------------------------------------------------------------------------------
 

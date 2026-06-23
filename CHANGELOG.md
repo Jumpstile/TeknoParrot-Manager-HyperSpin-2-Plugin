@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0
+
+- Add dgVoodoo2 setup (ROADMAP.md Phase 5), porting the original PowerShell tool's `Invoke-DgVoodoo2Setup`/`Get-GameLegacyApi`/`Test-DgVoodoo2UpToDate`. Two new actions: `preview_dgvoodoo2_setup` (dry-run) and `apply_dgvoodoo2_setup`. The DLLs are user-supplied via `dgVoodoo2SourcePath` (same "user already has it" pattern as `crosshairsPath`/`reShadeSourceDllPath`) -- this plugin does not download dgVoodoo2. Zero network calls in this phase, so no new permission entry was needed.
+- Detects each game's legacy graphics API usage (DirectX 8, DirectDraw, Glide 2x/3x) by scanning the exe for known DLL imports, then deploys only the DLL(s) that API actually needs (falling back to every available DLL if none of the needed ones are present in the source folder). Existing deployed DLLs are never overwritten.
+- Default action scope (no explicit `gameCodes`) only targets games with a detected legacy API, mirroring the original script's "auto-detected games only" selection mode. An explicit `gameCodes` list mirrors its "manual pick" mode, including deploying every available DLL to a named game that has no detected need (giving the user's explicit choice the benefit of the doubt, same as the original).
+- Per-game `dgVoodoo.conf` overrides via `dgVoodoo2PresetsPath` (`<ProfileCode>.conf`, always overwrites) alongside the global conf in the source folder (never overwrites an existing deployment) -- same convention as ReShade's preset handling.
+- 17 new tests (97/97 passing) covering legacy API detection, the up-to-date check, and deploy/dry-run/overwrite/selection-mode behavior.
+
 ## 0.10.0
 
 - Add ReShade setup (ROADMAP.md Phase 4), porting the original PowerShell tool's `Invoke-ReShadeSetup`/`Test-ReShadeDllSignature`/`Get-ReShadeLatestVersion`/`Get-ReShadeTargetInfo`/`Get-GameApiDll`/`Get-ExeArchitecture`. Three new actions: `check_reshade_update` (read-only -- file version + Authenticode signature status + reshade.me version check), `preview_reshade_setup` (dry-run), and `apply_reshade_setup`. The 64-bit ReShade DLL is required (`reShadeSourceDllPath` setting); a 32-bit DLL (`reShadeSourceDll32Path`) and a preset `.ini` (`reShadePresetPath`, with a per-game override folder via `reShadePresetsPath`) are optional. This plugin does not download ReShade itself -- same "user already has it" pattern as `crosshairsPath`.

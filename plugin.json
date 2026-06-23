@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -175,6 +175,22 @@
       "type": "directory",
       "label": "Per-Game ReShade Presets Folder (advanced, optional)",
       "description": "Advanced. A folder of preset files named after a specific game (e.g. Daytona3.ini) to use instead of your main preset for just that game. Leave blank unless you need this.",
+      "defaultValue": "",
+      "required": false
+    },
+    {
+      "key": "dgVoodoo2SourcePath",
+      "type": "directory",
+      "label": "dgVoodoo2 Folder (optional)",
+      "description": "Fixes some older games that crash or show a black screen. Download dgVoodoo2 yourself, then point this at the folder with its DLL files. Leave blank to skip this entirely.",
+      "defaultValue": "",
+      "required": false
+    },
+    {
+      "key": "dgVoodoo2PresetsPath",
+      "type": "directory",
+      "label": "Per-Game dgVoodoo2 Settings Folder (advanced, optional)",
+      "description": "Advanced. A folder of settings files named after a specific game (e.g. Daytona3.conf) to use instead of the main settings for just that game. Leave blank unless you need this.",
       "defaultValue": "",
       "required": false
     },
@@ -354,6 +370,23 @@
       "type": "primary",
       "confirmation": true,
       "confirmationMessage": "This will install ReShade into every supported game using the DLL(s) and preset you've configured. Everything is backed up first, and your game files are never modified. Continue?"
+    },
+    {
+      "id": "preview_dgvoodoo2_setup",
+      "label": "Preview dgVoodoo2 Setup",
+      "description": "See which games would be fixed, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_dgvoodoo2_setup",
+      "label": "Apply dgVoodoo2 Setup",
+      "description": "Fixes older games that crash or show a black screen, using the files you've provided.",
+      "icon": "wrench",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This will install dgVoodoo2 into games that need it, using the files you've configured. Everything is backed up first, and your game files are never modified. Continue?"
     },
     {
       "id": "preview_sync",

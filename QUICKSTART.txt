@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.10.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.11.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -168,6 +168,23 @@
   Once installed, press the Home key in-game to turn effects on or off.
   To remove it from a game, delete the one file it added -- nothing else
   is touched.
+
+
+  FIX OLDER GAMES THAT CRASH OR SHOW A BLACK SCREEN (OPTIONAL)
+  ------------------------------------------------------------------
+  Some older games crash or show a black screen on modern PCs. dgVoodoo2
+  is a free tool that fixes this. You get the files yourself; the plugin
+  installs them.
+
+  1. Go to dege.freeweb.hu/dgVoodoo2/dgVoodoo2 and download it.
+  2. Put the files in a folder, and set that as the "dgVoodoo2 Folder"
+     setting in this plugin.
+  3. Click "Preview dgVoodoo2 Setup" to see which games would be fixed --
+     the plugin figures this out automatically.
+  4. Click "Apply dgVoodoo2 Setup" to install it.
+
+  Only games that actually need this are touched. To remove it, delete
+  the files it added to a game's folder.
 
 
   ADD YOUR GAMES TO HYPERHQ

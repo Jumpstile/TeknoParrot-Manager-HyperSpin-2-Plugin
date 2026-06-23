@@ -15,7 +15,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.10.0";
+    internal const string PluginVersion = "0.11.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -482,6 +482,48 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { success = true, result, backup_path = backup?.BackupPath };
     }
 
+    private static object PreviewDgVoodoo2Setup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        if (string.IsNullOrWhiteSpace(settings.DgVoodoo2SourcePath) || !Directory.Exists(settings.DgVoodoo2SourcePath))
+        {
+            return new { success = false, error = "Set the \"dgVoodoo2 Folder\" setting to a folder containing your dgVoodoo2 DLLs first." };
+        }
+
+        if (!TeknoParrotProfileScanner.AllDgVoodoo2Dlls.Any(dll => File.Exists(Path.Combine(settings.DgVoodoo2SourcePath, dll))))
+        {
+            return new { success = false, error = "No dgVoodoo2 DLLs found in the configured folder. Expected one or more of: D3D8.dll, DDraw.dll, D3DImm.dll, Glide2x.dll, Glide3x.dll." };
+        }
+
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var result = TeknoParrotProfileScanner.ApplyDgVoodoo2Setup(settings, gameCodes, dryRun: true, LogAsyncSink);
+        return new { success = true, result };
+    }
+
+    private static object ApplyDgVoodoo2Setup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        if (string.IsNullOrWhiteSpace(settings.DgVoodoo2SourcePath) || !Directory.Exists(settings.DgVoodoo2SourcePath))
+        {
+            return new { success = false, error = "Set the \"dgVoodoo2 Folder\" setting to a folder containing your dgVoodoo2 DLLs first." };
+        }
+
+        if (!TeknoParrotProfileScanner.AllDgVoodoo2Dlls.Any(dll => File.Exists(Path.Combine(settings.DgVoodoo2SourcePath, dll))))
+        {
+            return new { success = false, error = "No dgVoodoo2 DLLs found in the configured folder. Expected one or more of: D3D8.dll, DDraw.dll, D3DImm.dll, Glide2x.dll, Glide3x.dll." };
+        }
+
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = TeknoParrotProfileScanner.ApplyDgVoodoo2Setup(settings, gameCodes, dryRun: false, LogAsyncSink);
+        return new { success = true, result, backup_path = backup?.BackupPath };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -524,6 +566,8 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "check_reshade_update" => await CheckReShadeUpdate(data),
             "preview_reshade_setup" => PreviewReShadeSetup(data),
             "apply_reshade_setup" => ApplyReShadeSetup(data),
+            "preview_dgvoodoo2_setup" => PreviewDgVoodoo2Setup(data),
+            "apply_dgvoodoo2_setup" => ApplyDgVoodoo2Setup(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),
@@ -1255,6 +1299,8 @@ public sealed class TeknoParrotSettings
     public string ReShadeSourceDll32Path { get; set; } = string.Empty;
     public string ReShadePresetPath { get; set; } = string.Empty;
     public string ReShadePresetsPath { get; set; } = string.Empty;
+    public string DgVoodoo2SourcePath { get; set; } = string.Empty;
+    public string DgVoodoo2PresetsPath { get; set; } = string.Empty;
     public bool DownloadMedia { get; set; } = true;
     public bool AutoSyncOnDbConnect { get; set; } = false;
 
@@ -1277,6 +1323,8 @@ public sealed class TeknoParrotSettings
             ReShadeSourceDll32Path = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadeSourceDll32Path, ReShadeSourceDll32Path),
             ReShadePresetPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadePresetPath, ReShadePresetPath),
             ReShadePresetsPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.ReShadePresetsPath, ReShadePresetsPath),
+            DgVoodoo2SourcePath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.DgVoodoo2SourcePath, DgVoodoo2SourcePath),
+            DgVoodoo2PresetsPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.DgVoodoo2PresetsPath, DgVoodoo2PresetsPath),
             DownloadMedia = other.DownloadMedia,
             AutoSyncOnDbConnect = other.AutoSyncOnDbConnect
         };
