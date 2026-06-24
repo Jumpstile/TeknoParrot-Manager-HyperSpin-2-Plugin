@@ -7,6 +7,29 @@
 
 
 -------------------------------------------------------------------------------
+  v0.14.0
+-------------------------------------------------------------------------------
+
+  Added PostgreSQL setup -- this is the last planned feature, so this
+  plugin now covers everything the original TeknoParrot Manager script
+  did. A small number of older games (Golden Tee Live, Power Putt Live,
+  and similar) need this database program to work. New buttons: "Check
+  PostgreSQL Status," "Install PostgreSQL," "Preview/Apply PostgreSQL
+  Game Setup," "Backup PostgreSQL Databases," and "Restore PostgreSQL
+  Backup." See the README's POSTGRESQL SETUP section for the full
+  walkthrough.
+
+  Installing PostgreSQL is different from anything else this plugin
+  does: it asks Windows for one-time Administrator permission (a single
+  permission prompt) to create a Windows service and a Windows user
+  account, and downloads its installer from a community-maintained
+  source since PostgreSQL 8.3 -- the old version a few games need --
+  isn't offered directly by the PostgreSQL project anymore. Your
+  database password is encrypted and saved on this PC only. Windows
+  only -- not available on other operating systems.
+
+
+-------------------------------------------------------------------------------
   v0.13.0
 -------------------------------------------------------------------------------
 

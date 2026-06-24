@@ -16,7 +16,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.13.0";
+    internal const string PluginVersion = "0.14.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -43,6 +43,17 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             if (args.Length > 0 && args[0] == "--version")
             {
                 Console.WriteLine(PluginVersion);
+                return;
+            }
+
+            // Internal-only entry point for the self-elevated PostgreSQL
+            // install worker (see PostgresInstall.cs/PostgresCleanup.cs).
+            // Re-launched via Verb="runas" by the unelevated plugin
+            // process for just this one operation -- never invoked
+            // directly by HyperHQ or a user.
+            if (args.Length >= 3 && args[0] == "--postgres-install-elevated")
+            {
+                await TeknoParrotProfileScanner.RunElevatedPostgresInstallWorkerAsync(args[1], args[2]);
                 return;
             }
 
@@ -642,6 +653,140 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { success = true, result, backup_path = backup?.BackupPath };
     }
 
+    // Read-only: true if PostgreSQL 8.3 is already installed. No
+    // network calls, no elevation needed.
+    private static object CheckPostgresInstalled()
+    {
+        return new { success = true, installed = TeknoParrotProfileScanner.IsPostgresInstalled() };
+    }
+
+    // Resolves the superuser password to use for a Postgres operation:
+    // an explicitly-provided "superPassword" payload field is verified
+    // and saved (encrypted) for next time; otherwise the previously
+    // saved password is tried. Mirrors the original's exact fallback
+    // order (try saved, verify it still works, else prompt) -- adapted
+    // from an interactive prompt to an optional payload field.
+    private static async Task<(string? Password, object? Error)> ResolvePostgresSuperPasswordAsync(JsonElement data, CancellationToken cancellationToken)
+    {
+        var provided = GetString(data, "superPassword");
+        if (!string.IsNullOrWhiteSpace(provided))
+        {
+            if (!await TeknoParrotProfileScanner.TestPostgresPassword(provided, cancellationToken).ConfigureAwait(false))
+            {
+                return (null, new { success = false, error = "That password did not work against your PostgreSQL server." });
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                TeknoParrotProfileScanner.SaveSuperuserPassword(provided);
+            }
+
+            return (provided, null);
+        }
+
+        var saved = OperatingSystem.IsWindows() ? TeknoParrotProfileScanner.TryGetSavedSuperuserPassword() : null;
+        if (string.IsNullOrWhiteSpace(saved))
+        {
+            return (null, new { success = false, error = "No PostgreSQL database password saved yet -- include \"superPassword\" in this action's data." });
+        }
+
+        if (!await TeknoParrotProfileScanner.TestPostgresPassword(saved, cancellationToken).ConfigureAwait(false))
+        {
+            return (null, new { success = false, error = "The saved PostgreSQL database password no longer works -- include a fresh \"superPassword\" in this action's data." });
+        }
+
+        return (saved, null);
+    }
+
+    // Installs PostgreSQL 8.3 if not already present. Requires both
+    // "servicePassword" and "superPassword" in the action payload.
+    // Self-elevates (a UAC prompt) for just the install -- this plugin
+    // process and HyperHQ never run elevated.
+    private static async Task<object> ApplyPostgresInstall(JsonElement data)
+    {
+        if (TeknoParrotProfileScanner.IsPostgresInstalled())
+        {
+            return new { success = true, message = "PostgreSQL is already installed." };
+        }
+
+        var servicePassword = GetString(data, "servicePassword");
+        var superPassword = GetString(data, "superPassword");
+        if (string.IsNullOrWhiteSpace(servicePassword) || string.IsNullOrWhiteSpace(superPassword))
+        {
+            return new { success = false, error = "Both \"servicePassword\" and \"superPassword\" are required to install PostgreSQL." };
+        }
+
+        var result = await TeknoParrotProfileScanner.InstallPostgres83Async(ProfileSetHttpClient, servicePassword, superPassword, LogAsyncSink).ConfigureAwait(false);
+        return new { success = result.Success, message = result.Message };
+    }
+
+    // Read-only preview of the per-game Postgres setup pass.
+    private static async Task<object> PreviewPostgresGameSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var (password, error) = await ResolvePostgresSuperPasswordAsync(data, default).ConfigureAwait(false);
+        if (password is null)
+        {
+            return error!;
+        }
+
+        var result = await TeknoParrotProfileScanner.ApplyPostgresGameSetup(settings, password, dryRun: true, LogAsyncSink).ConfigureAwait(false);
+        return new { success = true, result };
+    }
+
+    private static async Task<object> ApplyPostgresGameSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var (password, error) = await ResolvePostgresSuperPasswordAsync(data, default).ConfigureAwait(false);
+        if (password is null)
+        {
+            return error!;
+        }
+
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = await TeknoParrotProfileScanner.ApplyPostgresGameSetup(settings, password, dryRun: false, LogAsyncSink).ConfigureAwait(false);
+        return new { success = true, result, backup_path = backup?.BackupPath };
+    }
+
+    // No preview pairing -- inherently non-destructive (only ever adds a
+    // new backup), matching backup_profiles's existing precedent.
+    private static async Task<object> BackupPostgresDatabases(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var (password, error) = await ResolvePostgresSuperPasswordAsync(data, default).ConfigureAwait(false);
+        if (password is null)
+        {
+            return error!;
+        }
+
+        var result = await TeknoParrotProfileScanner.BackupPostgresDatabases(settings, password, LogAsyncSink).ConfigureAwait(false);
+        return new { success = true, result };
+    }
+
+    // Destructive -- replaces each restored database's current content.
+    private static async Task<object> RestorePostgresBackup(JsonElement data)
+    {
+        var backupPath = GetString(data, "backupPath") ?? GetString(data, "backup_path");
+        if (string.IsNullOrWhiteSpace(backupPath) || !Directory.Exists(backupPath))
+        {
+            return new { success = false, error = "A valid backupPath is required." };
+        }
+
+        var (password, error) = await ResolvePostgresSuperPasswordAsync(data, default).ConfigureAwait(false);
+        if (password is null)
+        {
+            return error!;
+        }
+
+        var result = await TeknoParrotProfileScanner.RestorePostgresBackup(backupPath, password, LogAsyncSink).ConfigureAwait(false);
+        return new { success = true, result };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -692,6 +837,13 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "apply_ffb_blaster_setup" => ApplyFfbBlasterSetup(data),
             "preview_ffb_plugin_setup" => await PreviewFfbPluginSetup(data),
             "apply_ffb_plugin_setup" => await ApplyFfbPluginSetup(data),
+            "check_postgres_installed" => CheckPostgresInstalled(),
+            "preview_postgres_install" => CheckPostgresInstalled(),
+            "apply_postgres_install" => await ApplyPostgresInstall(data),
+            "preview_postgres_game_setup" => await PreviewPostgresGameSetup(data),
+            "apply_postgres_game_setup" => await ApplyPostgresGameSetup(data),
+            "backup_postgres_databases" => await BackupPostgresDatabases(data),
+            "restore_postgres_backup" => await RestorePostgresBackup(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),

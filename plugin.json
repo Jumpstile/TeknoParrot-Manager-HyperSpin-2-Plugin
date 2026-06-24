@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -54,7 +54,7 @@
     {
       "type": "file",
       "scope": "plugin-directory",
-      "description": "Write timestamped profile backups when requested, save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded, cache the BepInEx release ZIP in this plugin's own BepInExCache folder when downloaded, and cache the FFB plugin DLLs in this plugin's own FFBPluginCache folder when downloaded"
+      "description": "Write timestamped profile backups when requested, save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded, cache the BepInEx release ZIP in this plugin's own BepInExCache folder when downloaded, cache the FFB plugin DLLs in this plugin's own FFBPluginCache folder when downloaded, and cache the PostgreSQL installer guide / encrypted database password / database backups in this plugin's own PostgresInstallCache/PostgresSecrets/PostgresBackups folders"
     },
     {
       "type": "database",
@@ -90,6 +90,16 @@
       "type": "network",
       "scope": "ffb-plugin-download",
       "description": "Optional, user-triggered fetch of the public mightymikem/FFBArcadePlugin game-compatibility table and its two plugin DLLs (a few MB total), only when you click \"Apply FFB Plugin Setup\". The plugin never runs the downloaded code itself, and an existing file at the destination is never overwritten."
+    },
+    {
+      "type": "network",
+      "scope": "postgres-install",
+      "description": "Optional, user-triggered download of a community-packaged PostgreSQL 8.3 installer and per-game database guides (Eggmansworld/tp-it-guides on GitHub -- PostgreSQL 8.3 itself is long-discontinued by the PostgreSQL project, so this is a community repackaging, the same source already used for this plugin's Collection Dat), only when you click \"Install PostgreSQL\". Several older Incredible Technologies games (Golden Tee Live, Power Putt Live, and similar) need this specific old version to store game data locally -- nothing is ever sent over the internet by PostgreSQL itself."
+    },
+    {
+      "type": "system",
+      "scope": "postgres-service-install",
+      "description": "Installing PostgreSQL creates a Windows service and a local Windows user account named \"postgres\" -- this requires Administrator privileges for that one step (a UAC prompt), which only elevates the installer itself, never this plugin or HyperHQ. Only runs when you click \"Install PostgreSQL\"; everything else in this plugin runs unelevated."
     }
   ],
   "settings": [
@@ -448,6 +458,57 @@
       "type": "primary",
       "confirmation": true,
       "confirmationMessage": "This will download the free FFB Arcade Plugin from its official GitHub repo and install it into supported games. Games already covered by FFB Blaster are skipped by default, and an existing file at the destination is never overwritten. Continue?"
+    },
+    {
+      "id": "check_postgres_installed",
+      "label": "Check PostgreSQL Status",
+      "description": "See whether PostgreSQL (needed by a small number of older games like Golden Tee Live) is already installed.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_postgres_install",
+      "label": "Install PostgreSQL",
+      "description": "Installs PostgreSQL, needed by a small number of older games (Golden Tee Live, Power Putt Live, and similar). Requires two passwords and Administrator permission for this one step. Never reinstalls if already present.",
+      "icon": "database",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This installs PostgreSQL 8.3, needed by a small number of older games. It will: ask Windows for Administrator permission for this one step only (a single permission prompt -- nothing else in this plugin needs it); create a Windows service and a Windows user account named \"postgres\"; and download the installer from a community-maintained source (Eggmansworld/tp-it-guides on GitHub), since PostgreSQL 8.3 itself is no longer offered by the PostgreSQL project. You'll need to provide a SERVICE ACCOUNT password and a DATABASE password in this action's data (servicePassword/superPassword) -- the database password is saved (encrypted) so you won't need to re-enter it for other PostgreSQL actions. Continue?"
+    },
+    {
+      "id": "preview_postgres_game_setup",
+      "label": "Preview PostgreSQL Game Setup",
+      "description": "See which games would be configured to use PostgreSQL, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_postgres_game_setup",
+      "label": "Apply PostgreSQL Game Setup",
+      "description": "Configures every registered game that needs PostgreSQL, creating and restoring its database from the files included with the game when needed. Never overwrites a setting you've already configured.",
+      "icon": "database",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This will configure every registered game that needs PostgreSQL. Everything is backed up first. Requires PostgreSQL to already be installed. Continue?"
+    },
+    {
+      "id": "backup_postgres_databases",
+      "label": "Backup PostgreSQL Databases",
+      "description": "Saves a backup copy of your PostgreSQL game databases right now.",
+      "icon": "archive",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "restore_postgres_backup",
+      "label": "Restore PostgreSQL Backup",
+      "description": "Brings back a previous backup of your PostgreSQL game databases.",
+      "icon": "rotate-ccw",
+      "type": "secondary",
+      "confirmation": true,
+      "confirmationMessage": "This will REPLACE the current content of each database in the chosen backup. This cannot be undone. Continue?"
     },
     {
       "id": "preview_sync",

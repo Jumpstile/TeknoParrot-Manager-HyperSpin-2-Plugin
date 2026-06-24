@@ -62,12 +62,20 @@ it specifically, after reviewing a concrete implementation plan.
 
 **Update (v0.13.0):** FFB's free third-party plugin path is the second --
 same explicit-decision pattern, reviewed and approved before
-implementation. PostgreSQL setup is the only one of the three remaining;
-it still needs its own explicit go-ahead when its turn comes, same as the
-other two got -- this is not a blanket approval. Everything else (Group
-A, including FFB Blaster's paid path, which shipped alongside the free
-plugin in the same v0.13.0 release since they're one ROADMAP phase) has
-no such conflict and can proceed without that conversation.
+implementation. Everything else (Group A, including FFB Blaster's paid
+path, which shipped alongside the free plugin in the same v0.13.0 release
+since they're one ROADMAP phase) has no such conflict and can proceed
+without that conversation.
+
+**Update (v0.14.0):** PostgreSQL setup is the third and final one --
+same explicit-decision pattern (full scope confirmed, self-elevation
+approach confirmed, password persistence approach confirmed, before
+implementation), the riskiest of the three since it runs an MSI
+installer and creates a Windows service + local user account requiring
+Administrator privileges for that one step (self-elevated via a one-shot
+re-launch of this plugin's own executable, never the plugin's normal
+process or HyperHQ itself). All three Group B items have now shipped --
+every phase on this roadmap is complete.
 
 ## Phase order
 
@@ -200,7 +208,7 @@ pieces of shared infrastructure this plugin had never needed before --
 `LogDownloadAudit` (SHA256 download audit logging, `Program.cs`). Two new
 actions: `preview_bepinex_update` (dry-run) and `apply_bepinex_update`.
 
-### Phase 9 -- PostgreSQL setup (Group B, highest risk in this group)
+### Phase 9 -- PostgreSQL setup (Group B, highest risk in this group) -- DONE (v0.14.0)
 Port `Install-Postgres83` + `Invoke-PostgresGameSetup` +
 `Test-GameNeedsPostgres`/`Test-PostgresInstalled`/
 `Test-PostgresPassword` + `Backup-PostgresDatabases`/
@@ -212,6 +220,30 @@ needs the self-elevation helper noted in the original architecture plan
 (`ProcessStartInfo { Verb = "runas" }` for just this step, not the whole
 plugin process) rather than the original script's "close and re-run as
 Administrator" instruction.
+
+Implementation notes: full scope shipped (install + per-game setup +
+backup/restore). Self-elevation went a step further than just the
+`msiexec` call alone -- the partial-install cleanup logic also needs an
+Administrator *token* on the calling process itself for its in-process
+registry/local-user-account APIs (`Microsoft.Win32.Registry`,
+`System.DirectoryServices.AccountManagement`), which `Verb = "runas"` on
+a child process launch can't grant retroactively. So the whole
+cleanup+install sequence self-elevates by re-launching this same plugin
+executable with an internal-only `--postgres-install-elevated <argsFile>
+<resultFile>` CLI argument (one UAC prompt covers the whole sequence;
+see `Program.cs`'s `Main`, `PostgresInstall.cs`'s
+`RunElevatedPostgresInstallWorkerAsync`) -- the plugin's normal
+long-running process and HyperHQ itself never run elevated. Password
+persistence via `System.Security.Cryptography.ProtectedData`
+(`DataProtectionScope.CurrentUser`), the direct .NET equivalent of the
+original's DPAPI-based `ConvertTo-SecureString`. New actions:
+`check_postgres_installed`, `apply_postgres_install`,
+`preview_postgres_game_setup`/`apply_postgres_game_setup`,
+`backup_postgres_databases`, `restore_postgres_backup`. The installer
+package itself comes from a community repackaging
+(`Eggmansworld/tp-it-guides` on GitHub) rather than PostgreSQL's own
+site, since PostgreSQL 8.3 is long discontinued upstream -- the same
+source already credited for this plugin's Collection Dat.
 
 When this phase starts, port these two upstream hardenings too (found via
 the v0.99.20 -> v0.99.23 sync, 2026-06-24, before this phase existed --

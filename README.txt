@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.13.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.14.0
   Author: Jumpstile
 ===============================================================================
 
@@ -102,6 +102,12 @@
     GitHub page. If a game is covered by both, FFB Blaster is preferred
     by default.
 
+  - PostgreSQL setup. A small number of older games (Golden Tee Live,
+    Power Putt Live, and similar) need this database program installed
+    to work at all. This plugin can install it for you (asking Windows
+    for one-time permission to do so), configure each game to use it,
+    and back up / restore the game data it stores.
+
   - Backup and restore. Backs up your game profiles before any risky
     change, and lets you restore an earlier backup -- with a safety
     backup of your current profiles taken automatically first.
@@ -120,6 +126,11 @@
 
   - It will not install TeknoParrot itself -- you need that installed
     first.
+  - The one exception to "this plugin doesn't install software": a small
+    number of older games need a database program called PostgreSQL to
+    work at all. If you choose to install it through this plugin, it
+    asks Windows for one-time permission to do so and tells you exactly
+    what it's about to do first -- see the POSTGRESQL SETUP section.
   - It will not download game files, ROMs, or any copyrighted content.
   - It will not guess when it isn't sure. If something is ambiguous, it
     skips that item and tells you, instead of making a risky guess.
@@ -380,6 +391,58 @@
 
 
 -------------------------------------------------------------------------------
+  POSTGRESQL SETUP
+-------------------------------------------------------------------------------
+
+  A small number of older games (Golden Tee Live, Power Putt Live,
+  Silver Strike Bowling Live, Target Toss Pro, and Orange County Choppers
+  Pinball) need a small database program called PostgreSQL installed to
+  store their own game data. This is the only thing this plugin
+  installs other than copying files into a game's own folder.
+
+  INSTALLING POSTGRESQL
+
+    1. Click "Check PostgreSQL Status" to see if it's already installed
+       -- if it is, you can skip straight to the game setup step below.
+    2. Click "Install PostgreSQL", providing a SERVICE ACCOUNT password
+       and a DATABASE password (you'll be asked for both). Windows will
+       show a one-time permission prompt for this step only -- nothing
+       else in this plugin needs it. Your database password is saved
+       (encrypted, tied to your Windows account) so you won't be asked
+       for it again on later PostgreSQL actions.
+
+    What this step actually does: downloads a ready-to-use installer
+    package from a community-maintained source (since PostgreSQL itself
+    no longer offers this old version directly), creates a Windows
+    service and a Windows user account named "postgres" to run it, and
+    starts it running quietly in the background. Nothing about it is
+    sent over the internet once installed -- it only talks to your own
+    TeknoParrot games on this same PC.
+
+    If PostgreSQL is already installed, this plugin will never reinstall
+    it or touch your existing setup.
+
+  SETTING UP YOUR GAMES
+
+    1. Click "Preview PostgreSQL Game Setup" to see which registered
+       games would be configured.
+    2. Click "Apply PostgreSQL Game Setup". Everything is backed up
+       first. A game that's already configured, or already has its
+       database, is left untouched.
+
+  BACKING UP AND RESTORING GAME DATA
+
+    - Click "Backup PostgreSQL Databases" any time to save a copy of the
+      data stored in PostgreSQL for your games.
+    - Click "Restore PostgreSQL Backup" to bring one back. This REPLACES
+      the current data for each database in that backup -- there's no
+      undo, so only do this if you're sure.
+
+  Windows only -- this feature isn't available on other operating
+  systems.
+
+
+-------------------------------------------------------------------------------
   BACKING UP AND RESTORING
 -------------------------------------------------------------------------------
 
@@ -409,10 +472,9 @@
                   deployment, cursor-hide setup, health reporting,
                   backups, HyperHQ library sync, GPU compatibility fixes,
                   ReShade setup, dgVoodoo2 setup, BepInEx update
-                  checking, and force feedback setup.
-
-    Not yet:      PostgreSQL setup. This is planned -- see the project's
-                  ROADMAP for progress.
+                  checking, force feedback setup, and PostgreSQL setup --
+                  every feature on the original project's roadmap for
+                  this plugin is now ported.
 
   HyperHQ remains your launcher and library manager; this plugin exists to
   give it the structured TeknoParrot profile and import behavior it needs.
@@ -440,7 +502,15 @@
     downloads nothing -- it only has an effect with a paid TeknoParrot
     membership, which this plugin can't check, so it tells you so plainly
     before you click it. See the FORCE FEEDBACK SETUP section above.
-  - Besides HyperHQ's own communication channel, the plugin makes five
+  - PostgreSQL setup is a different kind of exception: installing it
+    creates a Windows service and user account and needs a one-time
+    Administrator permission prompt -- which elevates only that one
+    installer step, never this plugin or HyperHQ itself. The installer
+    comes from a community-maintained source, since PostgreSQL 8.3 isn't
+    offered directly anymore. Your database password is encrypted and
+    saved on this PC only, never sent anywhere or shown in any log.
+    Windows only. See the POSTGRESQL SETUP section above.
+  - Besides HyperHQ's own communication channel, the plugin makes six
     kinds of outbound network calls, all read-only or explicitly
     triggered by you: a check of the public TeknoParrotUI profile-code
     list (falls back to your local GameProfiles listing without error if
@@ -448,7 +518,8 @@
     above, which only runs when you click "Check Collection Dat For
     Updates" or "Download Collection Dat"; the optional ReShade version
     check; the optional BepInEx update check/download described above;
-    and the optional FFB Plugin table/DLL fetch described above.
+    the optional FFB Plugin table/DLL fetch described above; and the
+    optional PostgreSQL installer guide fetch described above.
 
 
 -------------------------------------------------------------------------------
@@ -494,6 +565,13 @@
     This plugin downloads it directly from that official GitHub repo.
     FFB Blaster is TeknoParrot's own built-in feature, not a separate
     project -- nothing is downloaded for it.
+
+  - PostgreSQL is developed by the PostgreSQL Global Development Group.
+    The specific installer package this plugin uses is a community
+    repackaging maintained by Eggman:  https://github.com/Eggmansworld/tp-it-guides
+    (the same person already credited above for the Collection Dat),
+    since PostgreSQL 8.3 -- the specific old version a handful of games
+    need -- is no longer offered directly by the PostgreSQL project.
 
 
 -------------------------------------------------------------------------------

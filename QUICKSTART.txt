@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.13.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.14.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -222,6 +222,25 @@
   2. Click "Apply FFB Plugin Setup" to install it.
 
   If a game is covered by both, FFB Blaster is used by default.
+
+
+  SET UP POSTGRESQL (OPTIONAL -- ONLY NEEDED FOR A FEW SPECIFIC GAMES)
+  -------------------------------------------------------------------------
+  A handful of older games (Golden Tee Live, Power Putt Live, and
+  similar) need a small database program called PostgreSQL to work.
+
+  1. Click "Check PostgreSQL Status" -- if it says already installed,
+     skip to step 3.
+  2. Click "Install PostgreSQL" and provide the two passwords it asks
+     for. Windows will ask for one-time permission to do this (a single
+     permission prompt) -- nothing else in this plugin needs it. Your
+     database password is saved so you won't be asked again.
+  3. Click "Preview PostgreSQL Game Setup" to see which games need
+     configuring, then "Apply PostgreSQL Game Setup" to do it. Everything
+     is backed up first.
+
+  Use "Backup PostgreSQL Databases" / "Restore PostgreSQL Backup" the
+  same way you would for your regular profile backups. Windows only.
 
 
   ADD YOUR GAMES TO HYPERHQ

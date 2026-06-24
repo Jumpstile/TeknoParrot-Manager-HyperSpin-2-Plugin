@@ -10,6 +10,9 @@ TestResults/
 # Local instruction file -- contains local paths, not for public repos
 CLAUDE.md
 
+# clawpatch's local run/lock/state -- machine-specific, not for public repos
+.clawpatch/
+
 # User-specific generated files
 config.json
 *.log
