@@ -305,7 +305,8 @@ public class TeknoParrotProfileScannerTests
         });
 
         var response = await TeknoParrotManagerHyperSpin2PluginMain.ProcessMessage(message);
-        var preRestoreBackupPath = response.GetType().GetProperty("pre_restore_backup_path")?.GetValue(response)?.ToString();
+        var responseJson = JsonSerializer.SerializeToElement(response);
+        var preRestoreBackupPath = responseJson.TryGetProperty("pre_restore_backup_path", out var pathProp) ? pathProp.GetString() : null;
 
         Assert.False(string.IsNullOrWhiteSpace(preRestoreBackupPath));
         Assert.True(File.Exists(Path.Combine(preRestoreBackupPath!, "ID8.xml")));
@@ -408,6 +409,39 @@ public class TeknoParrotProfileScannerTests
         // The designated canonical reference game itself is never touched.
         Assert.Equal(canonicalBefore, File.ReadAllText(canonicalPath));
         Assert.DoesNotContain(result.Items, item => item.Code == "DrivingCanonical");
+    }
+
+    // Ported from teknoparrot-manager v0.99.20 (issue #1): a just-corrected
+    // archetype's Input API must be visible to other targets propagating
+    // from it in the SAME run, not just written to disk. "DrivingWrongApi"
+    // is corrected to RawInput by the canonicalArchetype override above;
+    // "ZZZDrivingTarget" (named to enumerate after it) has no overlapping
+    // key with the canonical archetype but does overlap with
+    // "DrivingWrongApi", so it must propagate the corrected RawInput value,
+    // not the stale pre-correction DirectInput one.
+    [Fact]
+    public void PropagateControls_uses_a_canonical_corrected_archetypes_new_api_for_later_targets_in_the_same_run()
+    {
+        using var fixture = new TeknoParrotFixture();
+        fixture.Settings.MinBoundForArchetype = 1;
+
+        fixture.WriteControlProfile(
+            "DrivingCanonical", "RawInput", new[] { "RawInput", "DirectInput", "XInput" },
+            new TeknoParrotFixture.ControlButton("P1AnalogX", "Wheel", Bound: true));
+        fixture.WriteControlProfile(
+            "DrivingWrongApi", "DirectInput", new[] { "RawInput", "DirectInput", "XInput" },
+            new TeknoParrotFixture.ControlButton("P1AnalogY", "Gas", Bound: true));
+        var targetPath = fixture.WriteControlProfile(
+            "ZZZDrivingTarget", "DirectInput", new[] { "RawInput", "DirectInput", "XInput" },
+            new TeknoParrotFixture.ControlButton("P1AnalogY", "Gas", Bound: false));
+
+        var overrides = new ControlOverrides { CanonicalArchetype = { ["driving"] = "DrivingCanonical" } };
+        var result = TeknoParrotProfileScanner.PropagateControls(fixture.Settings, overrides, dryRun: false);
+
+        var target = Assert.Single(result.Items, item => item.Code == "ZZZDrivingTarget");
+        Assert.Equal("bound", target.Status);
+        Assert.Equal("RawInput", target.ArchetypeApi);
+        Assert.Contains("<FieldValue>RawInput</FieldValue>", File.ReadAllText(targetPath));
     }
 
     [Fact]
@@ -539,5 +573,60 @@ public class TeknoParrotProfileScannerTests
 
         var xml = File.ReadAllText(Path.Combine(fixture.UserProfilesPath, "HasCursorField.xml"));
         Assert.Contains("<FieldValue>1</FieldValue>", xml);
+    }
+
+    // HyperHQ shows a generic "completed" toast regardless of this plugin's
+    // own success/error fields -- these confirm every execute response gets
+    // an explicit top-level "message" string, in case a future HyperHQ
+    // build reads it for the toast text instead.
+    [Fact]
+    public async Task Execute_response_includes_a_friendly_message_on_success()
+    {
+        using var fixture = new TeknoParrotFixture();
+
+        var response = await TeknoParrotManagerHyperSpin2PluginMain.ProcessMessage(JsonSerializer.Serialize(new
+        {
+            method = "execute",
+            data = new { action = "health_check", teknoparrotRootPath = fixture.RootPath }
+        }));
+
+        var json = JsonSerializer.SerializeToElement(response);
+        Assert.Equal("Health check complete.", json.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public async Task Execute_response_uses_the_error_text_as_the_message_on_failure()
+    {
+        using var fixture = new TeknoParrotFixture();
+
+        var response = await TeknoParrotManagerHyperSpin2PluginMain.ProcessMessage(JsonSerializer.Serialize(new
+        {
+            method = "execute",
+            data = new { action = "apply_dgvoodoo2_setup", teknoparrotRootPath = fixture.RootPath }
+        }));
+
+        var json = JsonSerializer.SerializeToElement(response);
+        var error = json.GetProperty("error").GetString();
+        Assert.Equal(error, json.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public void WithDisplayMessage_does_not_override_a_message_a_handler_already_set()
+    {
+        var response = TeknoParrotManagerHyperSpin2PluginMain.WithDisplayMessage(
+            "health_check", new { success = true, message = "Custom handler message." });
+
+        var json = JsonSerializer.SerializeToElement(response);
+        Assert.Equal("Custom handler message.", json.GetProperty("message").GetString());
+    }
+
+    [Fact]
+    public void WithDisplayMessage_falls_back_to_a_generic_message_for_an_unmapped_action()
+    {
+        var response = TeknoParrotManagerHyperSpin2PluginMain.WithDisplayMessage(
+            "some_future_action_not_in_the_table", new { success = true });
+
+        var json = JsonSerializer.SerializeToElement(response);
+        Assert.Equal("Done.", json.GetProperty("message").GetString());
     }
 }

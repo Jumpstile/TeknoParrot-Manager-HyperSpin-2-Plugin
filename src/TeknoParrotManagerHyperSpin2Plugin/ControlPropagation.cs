@@ -744,6 +744,21 @@ public static partial class TeknoParrotProfileScanner
             SaveProfileDocument(document, self.Path);
         }
 
+        // Update the in-memory pool entry too, not just the file on disk --
+        // self is the same object instance referenced by pool, so this is
+        // visible to every later iteration of this same run. Without this,
+        // a non-archetype profile that propagates from self later in this
+        // very run would still copy the now-stale pre-correction InputApi,
+        // since the "best" archetype a target propagates from is read from
+        // this same pool. Deliberately unconditional on dryRun, same as the
+        // original: a dry-run preview should stay internally consistent
+        // with itself even though nothing is actually written to disk.
+        // Ported from teknoparrot-manager v0.99.20 (issue #1) after a real
+        // tester's log showed exactly this: an archetype's correction and
+        // another profile propagating from it with the old value happened
+        // in the same run.
+        self.InputApi = canonical.InputApi;
+
         items.Add(ControlPropagationItem.ApiFixedCanonical(self.Code, canonical.Code, canonical.InputApi));
     }
 
@@ -857,7 +872,16 @@ internal sealed record ArchetypeEntry(
     List<string> Devices,
     Dictionary<string, string> ConfigCarry,
     Dictionary<string, XElement> Map,
-    int BoundCount);
+    int BoundCount)
+{
+    // Mutable, unlike every other property here: TryCorrectCanonicalArchetypeApi
+    // updates this in place after a canonicalArchetype correction, so a later
+    // target in the SAME run that picks this entry as its best-match archetype
+    // (via the same pool list/dictionary, same object reference) sees the
+    // corrected value instead of the stale pre-correction one. See the call
+    // site for the full story (ported from teknoparrot-manager v0.99.20, issue #1).
+    public string? InputApi { get; set; } = InputApi;
+}
 
 public sealed record ControlPropagationItem(
     [property: JsonPropertyName("code")] string Code,

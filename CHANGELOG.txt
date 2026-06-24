@@ -7,6 +7,24 @@
 
 
 -------------------------------------------------------------------------------
+  v0.11.2
+-------------------------------------------------------------------------------
+
+  Fixed a control-setup accuracy issue: if you used the "correct reference
+  game" feature (canonicalArchetype) to fix a reference game's controller
+  type, and OTHER games copied their controls from that same reference
+  game during the same run, they could occasionally copy the setting from
+  before the fix instead of after it. The file itself was always fixed
+  correctly -- this only affected what got copied to other games in that
+  same run. Now fixed.
+
+  Also: every action now reports a plain-language summary message
+  alongside its result, in case a future HyperHQ update shows clearer
+  pop-up text based on it (today HyperHQ shows the same generic
+  "completed" message regardless of what actually happened).
+
+
+-------------------------------------------------------------------------------
   v0.11.1
 -------------------------------------------------------------------------------
 
