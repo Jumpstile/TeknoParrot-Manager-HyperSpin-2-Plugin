@@ -16,7 +16,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.12.0";
+    internal const string PluginVersion = "0.13.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -572,6 +572,76 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { success = true, result, backup_path = backup?.BackupPath };
     }
 
+    // Read-only: previews the FFB Blaster field toggle. No network calls.
+    private static object PreviewFfbBlasterSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var result = TeknoParrotProfileScanner.ApplyFfbBlasterSetup(settings, dryRun: true, LogAsyncSink);
+        return new { success = true, result };
+    }
+
+    // Sets the FFB Blaster field on every eligible registered game. Has no
+    // effect at all without a paid TeknoParrot membership -- the action's
+    // own confirmationMessage in plugin.json states that prerequisite
+    // explicitly, since this plugin can't verify subscription status.
+    private static object ApplyFfbBlasterSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = TeknoParrotProfileScanner.ApplyFfbBlasterSetup(settings, dryRun: false, LogAsyncSink);
+        return new { success = true, result, backup_path = backup?.BackupPath };
+    }
+
+    // Read-only: fetches the live FFB plugin compatibility table and
+    // reports which registered games would get the third-party plugin
+    // deployed. Never downloads the DLLs or touches any game folder.
+    private static async Task<object> PreviewFfbPluginSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+
+        var gameMap = await TeknoParrotProfileScanner.GetFfbPluginGameMapAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        if (gameMap.Count == 0)
+        {
+            return new { success = false, error = "Could not reach GitHub to fetch the FFB plugin game list. See the log for details." };
+        }
+
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var result = TeknoParrotProfileScanner.CheckFfbPluginSetup(settings, gameMap, gameCodes, LogAsyncSink);
+        return new { success = true, result };
+    }
+
+    // Downloads the FFB plugin DLLs once, then deploys the matching
+    // architecture's DLL to every game CheckFfbPluginSetup matched. A game
+    // already covered by FFB Blaster is skipped by default unless named
+    // explicitly via gameCodes; an existing file at the destination is
+    // never overwritten.
+    private static async Task<object> ApplyFfbPluginSetup(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+
+        var gameMap = await TeknoParrotProfileScanner.GetFfbPluginGameMapAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        if (gameMap.Count == 0)
+        {
+            return new { success = false, error = "Could not reach GitHub to fetch the FFB plugin game list. See the log for details." };
+        }
+
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = await TeknoParrotProfileScanner.ApplyFfbPluginSetup(ProfileSetHttpClient, settings, gameMap, gameCodes, LogAsyncSink).ConfigureAwait(false);
+        return new { success = true, result, backup_path = backup?.BackupPath };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -618,6 +688,10 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "apply_dgvoodoo2_setup" => ApplyDgVoodoo2Setup(data),
             "preview_bepinex_update" => await PreviewBepInExUpdate(data),
             "apply_bepinex_update" => await ApplyBepInExUpdate(data),
+            "preview_ffb_blaster_setup" => PreviewFfbBlasterSetup(data),
+            "apply_ffb_blaster_setup" => ApplyFfbBlasterSetup(data),
+            "preview_ffb_plugin_setup" => await PreviewFfbPluginSetup(data),
+            "apply_ffb_plugin_setup" => await ApplyFfbPluginSetup(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),

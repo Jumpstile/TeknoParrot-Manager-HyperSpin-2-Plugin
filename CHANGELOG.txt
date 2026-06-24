@@ -7,6 +7,27 @@
 
 
 -------------------------------------------------------------------------------
+  v0.13.0
+-------------------------------------------------------------------------------
+
+  Added force feedback setup. There are two separate ways to get force
+  feedback (vibration/rumble effects) working:
+
+  - FFB Blaster: TeknoParrot's own built-in force feedback. This only
+    works with an active, paid TeknoParrot membership -- this plugin
+    can't check whether you have one, so the confirmation message says
+    so plainly before you click it.
+  - FFB Plugin: a free, open-source plugin covering a different set of
+    games, downloaded straight from its own official GitHub page.
+
+  If a game is covered by both, FFB Blaster is preferred by default and
+  the plugin won't install the free plugin on top of it (you can override
+  this for specific games if you want). Use "Preview FFB Blaster Setup" /
+  "Preview FFB Plugin Setup" to see what would change before applying
+  either one.
+
+
+-------------------------------------------------------------------------------
   v0.12.0
 -------------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -54,7 +54,7 @@
     {
       "type": "file",
       "scope": "plugin-directory",
-      "description": "Write timestamped profile backups when requested, save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded, and cache the BepInEx release ZIP in this plugin's own BepInExCache folder when downloaded"
+      "description": "Write timestamped profile backups when requested, save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded, cache the BepInEx release ZIP in this plugin's own BepInExCache folder when downloaded, and cache the FFB plugin DLLs in this plugin's own FFBPluginCache folder when downloaded"
     },
     {
       "type": "database",
@@ -85,6 +85,11 @@
       "type": "network",
       "scope": "bepinex-update",
       "description": "Optional, user-triggered check for newer BepInEx releases on the official BepInEx/BepInEx GitHub Releases (read-only query), and download of the release ZIP (a few MB) only when you click \"Update BepInEx\" and only for games that already have BepInEx installed. The plugin never installs BepInEx for the first time and never runs the downloaded code itself; the existing install is backed up before being overwritten."
+    },
+    {
+      "type": "network",
+      "scope": "ffb-plugin-download",
+      "description": "Optional, user-triggered fetch of the public mightymikem/FFBArcadePlugin game-compatibility table and its two plugin DLLs (a few MB total), only when you click \"Apply FFB Plugin Setup\". The plugin never runs the downloaded code itself, and an existing file at the destination is never overwritten."
     }
   ],
   "settings": [
@@ -409,6 +414,40 @@
       "type": "primary",
       "confirmation": true,
       "confirmationMessage": "This will download the latest BepInEx release from its official GitHub Releases and update every game that already has a 64-bit BepInEx install. Each game's existing BepInEx files are backed up first. Games without BepInEx, or with a 32-bit install, are left untouched. Continue?"
+    },
+    {
+      "id": "preview_ffb_blaster_setup",
+      "label": "Preview FFB Blaster Setup",
+      "description": "See which games would have force feedback enabled, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_ffb_blaster_setup",
+      "label": "Apply FFB Blaster Setup",
+      "description": "Turns on TeknoParrot's own built-in force feedback for every supported game.",
+      "icon": "gamepad-2",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "FFB Blaster only works with an active, paid TeknoParrot membership (teknoparrot.com/en/Home/Subscription) -- enabling it has no effect at all without one. This sets a field on every eligible registered game. Continue?"
+    },
+    {
+      "id": "preview_ffb_plugin_setup",
+      "label": "Preview FFB Plugin Setup",
+      "description": "See which games would get the free third-party force feedback plugin, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_ffb_plugin_setup",
+      "label": "Apply FFB Plugin Setup",
+      "description": "Installs the free, open-source FFB Arcade Plugin for force feedback into games it supports (a different game set than FFB Blaster). Downloaded directly from its official GitHub repo.",
+      "icon": "download",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This will download the free FFB Arcade Plugin from its official GitHub repo and install it into supported games. Games already covered by FFB Blaster are skipped by default, and an existing file at the destination is never overwritten. Continue?"
     },
     {
       "id": "preview_sync",

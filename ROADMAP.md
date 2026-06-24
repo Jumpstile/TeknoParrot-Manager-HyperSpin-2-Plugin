@@ -58,12 +58,16 @@ free plugin, BepInEx, or Postgres never has those permissions exercised.
 
 **Update (v0.12.0):** BepInEx update check is the first of these three to
 ship -- the user explicitly agreed to widen the Safety Notes boundary for
-it specifically, after reviewing a concrete implementation plan. This
-does *not* blanket-approve the other two (FFB's free plugin path,
-PostgreSQL setup) -- each still needs its own explicit go-ahead when its
-turn comes, same as this one got. Everything else (Group A, plus the rest
-of Phase 7 -- FFB Blaster's paid path) has no such conflict and can
-proceed without that conversation.
+it specifically, after reviewing a concrete implementation plan.
+
+**Update (v0.13.0):** FFB's free third-party plugin path is the second --
+same explicit-decision pattern, reviewed and approved before
+implementation. PostgreSQL setup is the only one of the three remaining;
+it still needs its own explicit go-ahead when its turn comes, same as the
+other two got -- this is not a blanket approval. Everything else (Group
+A, including FFB Blaster's paid path, which shipped alongside the free
+plugin in the same v0.13.0 release since they're one ROADMAP phase) has
+no such conflict and can proceed without that conversation.
 
 ## Phase order
 
@@ -159,25 +163,30 @@ also targets `linux-x64` (detection no-ops to "undetected" there, same as
 any other GPU-detection failure -- the caller can still pass an explicit
 vendor override).
 
-### Phase 7 -- Force feedback (Group B)
-Port `Invoke-FFBBlasterSetup` + `Invoke-FFBPluginSetup` +
-`Get-FFBPluginGameMap`/`Invoke-FFBPluginDownload` (tpm.ps1:4158, 3913,
-3843, 3879). Two independent paths -- TeknoParrot's own FFB Blaster
-(requires a paid TeknoParrot membership to function, the plugin can still
-deploy the field config) and a free third-party plugin covering a
-different game set -- with a conflict-resolution prompt for games covered
-by both.
+### Phase 7 -- Force feedback (Group B) -- DONE (v0.13.0)
+Ported `Invoke-FFBBlasterSetup` (`FfbBlaster.cs`, Group A, no new
+permission -- pure local profile-field editing) and
+`Invoke-FFBPluginSetup`/`Get-FFBPluginGameMap`/`Invoke-FFBPluginDownload`
+(`FfbPlugin.cs`, Group B -- second Group B feature in this plugin after
+BepInEx update check, v0.12.0). Two independent paths: TeknoParrot's own
+FFB Blaster (requires a paid TeknoParrot membership to function, which
+this plugin can't verify -- the apply action's `confirmationMessage`
+states that prerequisite explicitly instead of guessing) and the free
+`mightymikem/FFBArcadePlugin` covering a different game set. The
+original's interactive conflict-resolution prompt (native vs. third-party
+for games covered by both) became, for this plugin's non-interactive
+action model, the same default-prefers-native / explicit-`gameCodes`-
+overrides pattern dgVoodoo2 and ReShade already established -- and reads
+current on-disk FFB Blaster state directly rather than threading a
+session-scoped "enabled this run" list through, which is more robust
+(catches a game enabled via TeknoParrotUI itself or an earlier session).
 
-When this phase starts, carry forward this upstream fix too (found via
-the sync check, 2026-06-24, before this phase existed -- re-check for
-anything newer at that point too): **v0.99.25** split
-`Invoke-FFBPluginSetup`'s single "no match" skip counter into two --
-`skippedNoMatch` (game isn't in the plugin's supported-games table at
+Carried forward the **v0.99.25** fix found via the 2026-06-24 sync check:
+`Invoke-FFBPluginSetup`'s single "no match" skip counter split into two
+-- `skippedNoMatch` (game isn't in the plugin's supported-games table at
 all) and `skippedDllMissing` (game IS matched, but the 32-bit/64-bit
-plugin DLL hasn't been downloaded locally yet). The original combined
-counter made a fixable "go download the DLL" case look identical to a
-genuinely unsupported game. Keep these as two separate result counts in
-the C# port's result record.
+plugin DLL hasn't been downloaded locally yet) -- now `SkippedNoMatchCount`/
+`SkippedDllMissingCount` on `FfbPluginApplyResult`.
 
 ### Phase 8 -- BepInEx update check (Group B, update-only by design) -- DONE (v0.12.0)
 Ported `Invoke-BepInExUpdateCheck` + `Get-BepInExInstalledVersion`/

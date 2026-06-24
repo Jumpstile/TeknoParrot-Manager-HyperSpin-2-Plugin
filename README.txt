@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.12.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.13.0
   Author: Jumpstile
 ===============================================================================
 
@@ -94,6 +94,13 @@
     straight from BepInEx's own official GitHub page. Never installs
     BepInEx for the first time -- only updates an existing install. Your
     existing files are backed up first.
+
+  - Force feedback setup. Two separate ways to get vibration/rumble
+    working: TeknoParrot's own "FFB Blaster" (needs a paid TeknoParrot
+    membership to actually work), and a free third-party plugin covering
+    a different set of games, downloaded straight from its official
+    GitHub page. If a game is covered by both, FFB Blaster is preferred
+    by default.
 
   - Backup and restore. Backs up your game profiles before any risky
     change, and lets you restore an earlier backup -- with a safety
@@ -311,9 +318,9 @@
   If a game already has it installed, this plugin can check for and
   install a newer version for you.
 
-  This is the one feature in this plugin that downloads a third-party
-  tool automatically -- but only an UPDATE. It never installs BepInEx for
-  the first time; a game without BepInEx already installed is left
+  This is one of two features in this plugin that downloads something
+  automatically -- but only an UPDATE. It never installs BepInEx for the
+  first time; a game without BepInEx already installed is left
   completely alone, no matter what.
 
   How to use it:
@@ -331,6 +338,45 @@
 
   Games with a 32-bit BepInEx install, or no BepInEx install at all, are
   left untouched.
+
+
+-------------------------------------------------------------------------------
+  FORCE FEEDBACK SETUP
+-------------------------------------------------------------------------------
+
+  There are two separate ways to get force feedback (vibration/rumble)
+  working in TeknoParrot, covering different games:
+
+  FFB BLASTER (TeknoParrot's own built-in force feedback)
+
+    This only works with an active, paid TeknoParrot membership
+    (teknoparrot.com/en/Home/Subscription) -- this plugin has no way to
+    check whether you have one, so turning this on has zero effect if you
+    don't. No files are downloaded for this -- it's a local setting only.
+
+    1. Click "Preview FFB Blaster Setup" to see which games would be
+       affected.
+    2. Click "Apply FFB Blaster Setup" to turn it on for every supported
+       game.
+
+  FFB PLUGIN (a free, open-source alternative)
+
+    Covers a different set of games than FFB Blaster. This is the second
+    feature in this plugin that downloads something automatically --
+    straight from the plugin's own official GitHub page, never a
+    third-party mirror.
+
+    1. Click "Preview FFB Plugin Setup" to see which games would be
+       affected.
+    2. Click "Apply FFB Plugin Setup" to install it.
+
+    A game already covered by FFB Blaster is left alone by default (FFB
+    Blaster is preferred) -- existing files at the destination are never
+    overwritten either way.
+
+  To uninstall either one: for FFB Blaster, there's no file to delete --
+  just run TeknoParrotUI and turn the setting back off. For the FFB
+  Plugin, delete the one DLL file it added to the game's folder.
 
 
 -------------------------------------------------------------------------------
@@ -362,11 +408,11 @@
                   repair, control setup, device survey, crosshair
                   deployment, cursor-hide setup, health reporting,
                   backups, HyperHQ library sync, GPU compatibility fixes,
-                  ReShade setup, dgVoodoo2 setup, and BepInEx update
-                  checking.
+                  ReShade setup, dgVoodoo2 setup, BepInEx update
+                  checking, and force feedback setup.
 
-    Not yet:      force feedback setup and PostgreSQL setup. These are
-                  planned -- see the project's ROADMAP for progress.
+    Not yet:      PostgreSQL setup. This is planned -- see the project's
+                  ROADMAP for progress.
 
   HyperHQ remains your launcher and library manager; this plugin exists to
   give it the structured TeknoParrot profile and import behavior it needs.
@@ -384,19 +430,25 @@
   - Restoring a backup automatically backs up your current profiles first.
   - ReShade and dgVoodoo2 are installed from files you already supplied --
     this plugin never downloads either tool itself.
-  - BepInEx update checking is the one exception: it downloads BepInEx's
+  - BepInEx update checking is the first exception: it downloads BepInEx's
     own official release from BepInEx's own official GitHub page, and
     only ever as an update to a game that already has BepInEx installed.
     See the BEPINEX UPDATE CHECK section above for the full safeguards.
-  - Besides HyperHQ's own communication channel, the plugin makes four
+  - The FFB Plugin (free force feedback) is the second exception: it
+    downloads two small DLLs and a compatibility list from its own
+    official GitHub page. FFB Blaster (TeknoParrot's own force feedback)
+    downloads nothing -- it only has an effect with a paid TeknoParrot
+    membership, which this plugin can't check, so it tells you so plainly
+    before you click it. See the FORCE FEEDBACK SETUP section above.
+  - Besides HyperHQ's own communication channel, the plugin makes five
     kinds of outbound network calls, all read-only or explicitly
     triggered by you: a check of the public TeknoParrotUI profile-code
     list (falls back to your local GameProfiles listing without error if
     it fails); the optional collection dat check/download described
     above, which only runs when you click "Check Collection Dat For
     Updates" or "Download Collection Dat"; the optional ReShade version
-    check; and the optional BepInEx update check/download described
-    above.
+    check; the optional BepInEx update check/download described above;
+    and the optional FFB Plugin table/DLL fetch described above.
 
 
 -------------------------------------------------------------------------------
@@ -436,6 +488,12 @@
     This plugin downloads BepInEx updates directly from its official
     GitHub Releases page, and only as an update to an already-existing
     install -- it never installs BepInEx for the first time.
+
+  - The FFB Arcade Plugin is developed by mightymikem and distributed
+    under the GPL-3.0 license:  https://github.com/mightymikem/FFBArcadePlugin
+    This plugin downloads it directly from that official GitHub repo.
+    FFB Blaster is TeknoParrot's own built-in feature, not a separate
+    project -- nothing is downloaded for it.
 
 
 -------------------------------------------------------------------------------
