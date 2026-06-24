@@ -49,14 +49,21 @@ again):
   runtime binaries."* That line was a deliberate design boundary in the
   adopted base, not an oversight.
 
-Before any of those three ship, they need an explicit decision: update
-the Safety Notes boundary and add the corresponding `permissions` entries
-to `plugin.json` (network + file-write scopes per feature, mirroring how
-the dat-index work added an explicit network permission entry), gated by
-per-feature settings so a user who never touches FFB's free plugin,
-BepInEx, or Postgres never has those permissions exercised. Everything
-else above has no such conflict and can proceed without that
-conversation -- including the rest of Phase 7 (FFB Blaster's paid path).
+Each of these three needs its own explicit decision before it ships:
+update the Safety Notes boundary and add the corresponding `permissions`
+entry to `plugin.json` (network + file-write scopes per feature,
+mirroring how the dat-index work added an explicit network permission
+entry), gated by per-feature settings so a user who never touches FFB's
+free plugin, BepInEx, or Postgres never has those permissions exercised.
+
+**Update (v0.12.0):** BepInEx update check is the first of these three to
+ship -- the user explicitly agreed to widen the Safety Notes boundary for
+it specifically, after reviewing a concrete implementation plan. This
+does *not* blanket-approve the other two (FFB's free plugin path,
+PostgreSQL setup) -- each still needs its own explicit go-ahead when its
+turn comes, same as this one got. Everything else (Group A, plus the rest
+of Phase 7 -- FFB Blaster's paid path) has no such conflict and can
+proceed without that conversation.
 
 ## Phase order
 
@@ -172,12 +179,17 @@ counter made a fixable "go download the DLL" case look identical to a
 genuinely unsupported game. Keep these as two separate result counts in
 the C# port's result record.
 
-### Phase 8 -- BepInEx update check (Group B, update-only by design)
-Port `Invoke-BepInExUpdateCheck` + `Get-BepInExInstalledVersion`/
-`Get-BepInExInstalledArch`/`Get-BepInExLatestRelease` (tpm.ps1:4375, 4349,
-4364, 4310). Deliberately never fresh-installs BepInEx, only updates an
-already-present 64-bit install -- preserve that constraint exactly, it's a
-safety choice in the original, not a gap.
+### Phase 8 -- BepInEx update check (Group B, update-only by design) -- DONE (v0.12.0)
+Ported `Invoke-BepInExUpdateCheck` + `Get-BepInExInstalledVersion`/
+`Get-BepInExInstalledArch`/`Get-BepInExLatestRelease` into `BepInEx.cs`.
+Deliberately never fresh-installs BepInEx, only updates an already-present
+64-bit install -- preserved exactly, per the original's own safety choice.
+First Group B feature shipped: widened the Safety Notes boundary, added
+the `bepinex-update` network permission, and introduced two genuinely new
+pieces of shared infrastructure this plugin had never needed before --
+`ExtractZipSafe` (zip-slip-safe extraction, `Program.cs`) and
+`LogDownloadAudit` (SHA256 download audit logging, `Program.cs`). Two new
+actions: `preview_bepinex_update` (dry-run) and `apply_bepinex_update`.
 
 ### Phase 9 -- PostgreSQL setup (Group B, highest risk in this group)
 Port `Install-Postgres83` + `Invoke-PostgresGameSetup` +

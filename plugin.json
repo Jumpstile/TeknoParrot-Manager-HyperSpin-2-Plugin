@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.11.3",
+  "version": "0.12.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -54,7 +54,7 @@
     {
       "type": "file",
       "scope": "plugin-directory",
-      "description": "Write timestamped profile backups when requested, and save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded"
+      "description": "Write timestamped profile backups when requested, save the optional collection dat ZIP into this plugin's own EggmanDat folder when downloaded, and cache the BepInEx release ZIP in this plugin's own BepInExCache folder when downloaded"
     },
     {
       "type": "database",
@@ -80,6 +80,11 @@
       "type": "network",
       "scope": "reshade-version-check",
       "description": "Read-only fetch of https://reshade.me to compare your configured ReShade DLL's version against the latest release. Only runs when the user checks for ReShade updates; never downloads or executes anything."
+    },
+    {
+      "type": "network",
+      "scope": "bepinex-update",
+      "description": "Optional, user-triggered check for newer BepInEx releases on the official BepInEx/BepInEx GitHub Releases (read-only query), and download of the release ZIP (a few MB) only when you click \"Update BepInEx\" and only for games that already have BepInEx installed. The plugin never installs BepInEx for the first time and never runs the downloaded code itself; the existing install is backed up before being overwritten."
     }
   ],
   "settings": [
@@ -387,6 +392,23 @@
       "type": "primary",
       "confirmation": true,
       "confirmationMessage": "This will install dgVoodoo2 into games that need it, using the files you've configured. Everything is backed up first, and your game files are never modified. Continue?"
+    },
+    {
+      "id": "preview_bepinex_update",
+      "label": "Check BepInEx For Updates",
+      "description": "See which of your games with BepInEx already installed have a newer version available, without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_bepinex_update",
+      "label": "Update BepInEx",
+      "description": "Downloads the latest BepInEx release from its official GitHub Releases and updates every game that already has BepInEx installed. Never installs BepInEx for the first time.",
+      "icon": "download",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This will download the latest BepInEx release from its official GitHub Releases and update every game that already has a 64-bit BepInEx install. Each game's existing BepInEx files are backed up first. Games without BepInEx, or with a 32-bit install, are left untouched. Continue?"
     },
     {
       "id": "preview_sync",

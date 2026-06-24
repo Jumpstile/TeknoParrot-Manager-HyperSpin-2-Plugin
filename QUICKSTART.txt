@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.11.3  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.12.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
@@ -185,6 +185,22 @@
 
   Only games that actually need this are touched. To remove it, delete
   the files it added to a game's folder.
+
+
+  KEEP BEPINEX UP TO DATE (OPTIONAL)
+  -------------------------------------
+  BepInEx is a popular modding framework some arcade game ports rely on.
+  If a game already has it installed, this plugin can update it for you
+  -- but it will never install BepInEx for a game that doesn't already
+  have it.
+
+  1. Click "Check BepInEx For Updates" to see which of your games with
+     BepInEx already installed have a newer version available.
+  2. Click "Update BepInEx" to install it. Each game's existing BepInEx
+     files are backed up first.
+
+  Downloads come straight from BepInEx's own official GitHub page --
+  never a third-party mirror.
 
 
   ADD YOUR GAMES TO HYPERHQ

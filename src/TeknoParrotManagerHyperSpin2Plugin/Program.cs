@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -15,7 +16,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.11.3";
+    internal const string PluginVersion = "0.12.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -524,6 +525,53 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { success = true, result, backup_path = backup?.BackupPath };
     }
 
+    // Read-only: fetches the latest BepInEx release and reports which
+    // registered games with an existing x64 BepInEx install are outdated.
+    // Never downloads the zip or touches any game folder.
+    private static async Task<object> PreviewBepInExUpdate(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+
+        var latest = await TeknoParrotProfileScanner.GetBepInExLatestReleaseAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        if (latest is null)
+        {
+            return new { success = false, error = "Could not find a BepInEx release on GitHub. See the log for details." };
+        }
+
+        var result = TeknoParrotProfileScanner.CheckBepInExUpdates(settings, latest);
+        return new { success = true, result };
+    }
+
+    // Downloads the latest BepInEx x64 release zip once, then updates
+    // every outdated game that already has an existing x64 BepInEx
+    // install, backing up each game's existing install first. Never
+    // fresh-installs.
+    private static async Task<object> ApplyBepInExUpdate(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+
+        var latest = await TeknoParrotProfileScanner.GetBepInExLatestReleaseAsync(ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        if (latest is null)
+        {
+            return new { success = false, error = "Could not find a BepInEx release on GitHub. See the log for details." };
+        }
+
+        var checkResult = TeknoParrotProfileScanner.CheckBepInExUpdates(settings, latest);
+        if (checkResult.OutdatedGames.Count == 0)
+        {
+            return new { success = true, result = checkResult };
+        }
+
+        var backup = TryBackupProfilesForMutation(settings);
+        if (backup is { Success: false })
+        {
+            return new { success = false, error = backup.Error };
+        }
+
+        var result = await TeknoParrotProfileScanner.ApplyBepInExUpdates(ProfileSetHttpClient, latest, checkResult.OutdatedGames, LogAsyncSink).ConfigureAwait(false);
+        return new { success = true, result, backup_path = backup?.BackupPath };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -568,6 +616,8 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "apply_reshade_setup" => ApplyReShadeSetup(data),
             "preview_dgvoodoo2_setup" => PreviewDgVoodoo2Setup(data),
             "apply_dgvoodoo2_setup" => ApplyDgVoodoo2Setup(data),
+            "preview_bepinex_update" => await PreviewBepInExUpdate(data),
+            "apply_bepinex_update" => await ApplyBepInExUpdate(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),
@@ -2846,6 +2896,100 @@ public static partial class TeknoParrotProfileScanner
             return true;
         }
         return c.StartsWith(p + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Extracts a ZIP archive into destDir, rejecting any entry whose
+    // relative path traverses outside destDir via ".." or is rooted/
+    // absolute (zip-slip guard). Validates every entry before extracting
+    // any of them -- an archive containing one unsafe entry results in
+    // nothing being extracted at all, matching the original PowerShell
+    // tool's Expand-ZipFileSafe abort-before-any-write behavior. Skips
+    // that function's "\\?\" long-path-prefix workaround entirely -- that
+    // was a .NET Framework/PowerShell 5.1-specific fix for the legacy
+    // 260-char MAX_PATH limit; this project targets net10.0, which
+    // handles long paths natively on Windows 10+.
+    internal static void ExtractZipSafe(string zipPath, string destDir)
+    {
+        using var archive = ZipFile.OpenRead(zipPath);
+
+        foreach (var entry in archive.Entries)
+        {
+            if (string.IsNullOrEmpty(entry.FullName) || entry.FullName.EndsWith('/'))
+            {
+                continue;
+            }
+
+            var relative = entry.FullName.Replace('/', Path.DirectorySeparatorChar);
+            if (Path.IsPathRooted(relative) || relative.Split(Path.DirectorySeparatorChar).Any(segment => segment == ".."))
+            {
+                throw new InvalidDataException($"Unsafe zip entry path: '{entry.FullName}'.");
+            }
+
+            var destPath = Path.Combine(destDir, relative);
+            if (!IsPathInside(destPath, destDir))
+            {
+                throw new InvalidDataException($"Unsafe zip entry path: '{entry.FullName}'.");
+            }
+        }
+
+        Directory.CreateDirectory(destDir);
+
+        foreach (var entry in archive.Entries)
+        {
+            if (string.IsNullOrEmpty(entry.FullName) || entry.FullName.EndsWith('/'))
+            {
+                continue;
+            }
+
+            var destPath = Path.Combine(destDir, entry.FullName.Replace('/', Path.DirectorySeparatorChar));
+            // Re-checked immediately before the write (not just in the
+            // validation pass above) -- belt-and-suspenders, and keeps the
+            // sanitize-then-write relationship visible to a human reader at
+            // the exact call site that matters, rather than relying on a
+            // separate earlier loop. CA5389 (zip-slip) still flags this
+            // FileStream call under a strict analyzer pass regardless --
+            // a known limitation where the analyzer's taint tracker doesn't
+            // trace sanitization through a custom helper method like
+            // IsPathInside, only specific built-in patterns it recognizes.
+            // Verified via ExtractZipSafe_rejects_a_traversal_entry_and_extracts_nothing
+            // and ExtractZipSafe_rejects_a_rooted_entry_and_extracts_nothing
+            // in BepInExTests.cs that the guard genuinely works.
+            if (!IsPathInside(destPath, destDir))
+            {
+                throw new InvalidDataException($"Unsafe zip entry path: '{entry.FullName}'.");
+            }
+
+            var destPathDirectory = Path.GetDirectoryName(destPath);
+            if (!string.IsNullOrEmpty(destPathDirectory))
+            {
+                Directory.CreateDirectory(destPathDirectory);
+            }
+
+            using var entryStream = entry.Open();
+            using var fileStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            entryStream.CopyTo(fileStream);
+        }
+    }
+
+    // Logs a SHA256 hash of a just-downloaded file alongside its source
+    // URL, filename, and version, purely for the user's own later
+    // reference (e.g. diagnosing a corrupted/tampered download after the
+    // fact). Log-only -- never a pass/fail gate, since none of this
+    // plugin's download sources publish a checksum to validate against.
+    // Mirrors the original PowerShell tool's Write-DownloadAudit.
+    private static void LogDownloadAudit(string source, string fileName, string path, string? version, Action<string>? log)
+    {
+        try
+        {
+            using var stream = File.OpenRead(path);
+            var hash = Convert.ToHexString(SHA256.HashData(stream));
+            var versionPart = string.IsNullOrEmpty(version) ? "" : $" Version={version}";
+            log?.Invoke($"DownloadAudit: File={fileName}{versionPart} SHA256={hash} Source={source}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            log?.Invoke($"DownloadAudit: could not hash '{fileName}' -- {ex.Message}");
+        }
     }
 }
 

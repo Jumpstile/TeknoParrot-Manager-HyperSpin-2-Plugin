@@ -7,6 +7,22 @@
 
 
 -------------------------------------------------------------------------------
+  v0.12.0
+-------------------------------------------------------------------------------
+
+  Added BepInEx update checking. BepInEx is a popular modding framework
+  some arcade game ports rely on. If a game already has BepInEx
+  installed, this plugin can now check whether a newer version is
+  available and update it for you -- downloading straight from BepInEx's
+  own official GitHub page, never a third-party mirror. Your existing
+  BepInEx files are backed up first, and games that don't already have
+  BepInEx installed are left completely alone -- this never installs
+  BepInEx for the first time, only updates an existing install. Use
+  "Check BepInEx For Updates" to preview what would change, and "Update
+  BepInEx" to actually apply it.
+
+
+-------------------------------------------------------------------------------
   v0.11.3
 -------------------------------------------------------------------------------
 

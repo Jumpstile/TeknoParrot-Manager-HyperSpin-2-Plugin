@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.11.3
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.12.0
   Author: Jumpstile
 ===============================================================================
 
@@ -88,6 +88,12 @@
     on modern PCs. You supply the files yourself -- this plugin never
     downloads them. Automatically figures out which games need it and
     installs only what each one needs.
+
+  - BepInEx update check. If a game already has BepInEx (a popular
+    modding framework) installed, checks for and installs a newer version
+    straight from BepInEx's own official GitHub page. Never installs
+    BepInEx for the first time -- only updates an existing install. Your
+    existing files are backed up first.
 
   - Backup and restore. Backs up your game profiles before any risky
     change, and lets you restore an earlier backup -- with a safety
@@ -298,6 +304,36 @@
 
 
 -------------------------------------------------------------------------------
+  BEPINEX UPDATE CHECK
+-------------------------------------------------------------------------------
+
+  BepInEx is a popular modding framework some arcade game ports rely on.
+  If a game already has it installed, this plugin can check for and
+  install a newer version for you.
+
+  This is the one feature in this plugin that downloads a third-party
+  tool automatically -- but only an UPDATE. It never installs BepInEx for
+  the first time; a game without BepInEx already installed is left
+  completely alone, no matter what.
+
+  How to use it:
+
+    1. Click "Check BepInEx For Updates" to see which of your games with
+       BepInEx already installed have a newer version available.
+    2. Click "Update BepInEx" to install it. Each game's existing BepInEx
+       files are backed up first.
+
+  Where it downloads from: BepInEx's own official GitHub Releases page --
+  never a third-party mirror. The download is checked against that
+  official source before it's ever fetched, and the file extracted from
+  it is checked to make sure nothing in it can write outside the game's
+  own folder.
+
+  Games with a 32-bit BepInEx install, or no BepInEx install at all, are
+  left untouched.
+
+
+-------------------------------------------------------------------------------
   BACKING UP AND RESTORING
 -------------------------------------------------------------------------------
 
@@ -325,11 +361,12 @@
                   dat-index and profile-code fuzzy fallback), unique path
                   repair, control setup, device survey, crosshair
                   deployment, cursor-hide setup, health reporting,
-                  backups, and HyperHQ library sync.
+                  backups, HyperHQ library sync, GPU compatibility fixes,
+                  ReShade setup, dgVoodoo2 setup, and BepInEx update
+                  checking.
 
-    Not yet:      ReShade, dgVoodoo2, GPU fixes, force feedback setup,
-                  PostgreSQL setup, and BepInEx updates. These are planned
-                  -- see the project's ROADMAP for progress.
+    Not yet:      force feedback setup and PostgreSQL setup. These are
+                  planned -- see the project's ROADMAP for progress.
 
   HyperHQ remains your launcher and library manager; this plugin exists to
   give it the structured TeknoParrot profile and import behavior it needs.
@@ -345,15 +382,21 @@
   - Game path repair only writes when there is a single, unambiguous
     match.
   - Restoring a backup automatically backs up your current profiles first.
-  - The plugin does not download, install, or modify any third-party
-    runtime binaries.
-  - Besides HyperHQ's own communication channel, the plugin makes two
-    kinds of outbound network calls, both read-only or explicitly
+  - ReShade and dgVoodoo2 are installed from files you already supplied --
+    this plugin never downloads either tool itself.
+  - BepInEx update checking is the one exception: it downloads BepInEx's
+    own official release from BepInEx's own official GitHub page, and
+    only ever as an update to a game that already has BepInEx installed.
+    See the BEPINEX UPDATE CHECK section above for the full safeguards.
+  - Besides HyperHQ's own communication channel, the plugin makes four
+    kinds of outbound network calls, all read-only or explicitly
     triggered by you: a check of the public TeknoParrotUI profile-code
     list (falls back to your local GameProfiles listing without error if
-    it fails), and the optional collection dat check/download described
+    it fails); the optional collection dat check/download described
     above, which only runs when you click "Check Collection Dat For
-    Updates" or "Download Collection Dat".
+    Updates" or "Download Collection Dat"; the optional ReShade version
+    check; and the optional BepInEx update check/download described
+    above.
 
 
 -------------------------------------------------------------------------------
@@ -387,6 +430,12 @@
     This plugin does not develop, distribute, or download dgVoodoo2 -- you
     get it directly from the official site, and this plugin only installs
     the files you already downloaded.
+
+  - BepInEx is developed by the BepInEx team and distributed under the
+    LGPL-2.1 license:  https://github.com/BepInEx/BepInEx
+    This plugin downloads BepInEx updates directly from its official
+    GitHub Releases page, and only as an update to an already-existing
+    install -- it never installs BepInEx for the first time.
 
 
 -------------------------------------------------------------------------------
