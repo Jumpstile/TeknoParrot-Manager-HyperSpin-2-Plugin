@@ -15,7 +15,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.11.2";
+    internal const string PluginVersion = "0.11.3";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -579,87 +579,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         };
 
         settings = previousSettings.MergeWith(settings);
-        return WithDisplayMessage(action, response);
-    }
-
-    // HyperHQ shows a generic "completed" toast for every action regardless
-    // of this plugin's own success/error fields -- reported upstream, but
-    // until/unless HyperHQ reads something else, every response gets an
-    // explicit top-level "message" string here so there's at least one
-    // place a clearer toast could pull real text from. Failure responses
-    // reuse the existing "error" text; success responses use a per-action
-    // plain-language summary, falling back to a generic one for any action
-    // not in the table below. Never overrides a message a handler already
-    // set itself.
-    private static readonly Dictionary<string, string> ActionSuccessMessages = new(StringComparer.Ordinal)
-    {
-        ["run_setup_wizard"] = "Setup wizard started.",
-        ["scan_profiles"] = "Scan complete.",
-        ["scan_games"] = "Scan complete.",
-        ["health_check"] = "Health check complete.",
-        ["preview_registration"] = "Registration preview complete.",
-        ["register_games"] = "Registration complete.",
-        ["repair_game_paths"] = "Game path repair complete.",
-        ["preview_control_propagation"] = "Control setup preview complete.",
-        ["propagate_controls"] = "Controls copied.",
-        ["device_survey"] = "Device survey complete.",
-        ["preview_crosshairs"] = "Crosshair preview ready.",
-        ["deploy_crosshairs"] = "Crosshairs deployed.",
-        ["hide_cursor"] = "Cursor hidden for lightgun games.",
-        ["preview_gpu_fix"] = "GPU fix preview complete.",
-        ["apply_gpu_fix"] = "GPU fix applied.",
-        ["check_reshade_update"] = "ReShade update check complete.",
-        ["preview_reshade_setup"] = "ReShade setup preview complete.",
-        ["apply_reshade_setup"] = "ReShade setup applied.",
-        ["preview_dgvoodoo2_setup"] = "dgVoodoo2 setup preview complete.",
-        ["apply_dgvoodoo2_setup"] = "dgVoodoo2 setup applied.",
-        ["preview_sync"] = "Import preview complete.",
-        ["sync_games"] = "Games synced to HyperHQ.",
-        ["backup_profiles"] = "Backup created.",
-        ["restore_backup"] = "Backup restored.",
-        ["check_eggman_dat_update"] = "Collection dat update check complete.",
-        ["download_eggman_dat"] = "Collection dat downloaded.",
-    };
-
-    internal static object WithDisplayMessage(string action, object response)
-    {
-        JsonElement json;
-        try
-        {
-            json = JsonSerializer.SerializeToElement(response, JsonOptions);
-        }
-        catch (NotSupportedException)
-        {
-            return response;
-        }
-
-        if (json.ValueKind != JsonValueKind.Object || json.TryGetProperty("message", out _))
-        {
-            return response;
-        }
-
-        string message;
-        if (json.TryGetProperty("error", out var errorProp) && errorProp.ValueKind == JsonValueKind.String)
-        {
-            message = errorProp.GetString() ?? "Action failed.";
-        }
-        else if (json.TryGetProperty("success", out var successProp) && successProp.ValueKind == JsonValueKind.False)
-        {
-            message = "Action failed.";
-        }
-        else
-        {
-            message = ActionSuccessMessages.GetValueOrDefault(action, "Done.");
-        }
-
-        var withMessage = new Dictionary<string, object?>();
-        foreach (var property in json.EnumerateObject())
-        {
-            withMessage[property.Name] = property.Value;
-        }
-
-        withMessage["message"] = message;
-        return withMessage;
+        return response;
     }
 
     private static Task<object> GetStatus()

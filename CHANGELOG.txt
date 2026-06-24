@@ -7,6 +7,19 @@
 
 
 -------------------------------------------------------------------------------
+  v0.11.3
+-------------------------------------------------------------------------------
+
+  Removed the experimental per-action summary message added in v0.11.2.
+  Real-world testing confirmed HyperHQ doesn't actually use it for the
+  pop-up text -- the same generic "completed successfully" message still
+  shows up regardless. This has been reported to the HyperHQ developers
+  as something they'll need to fix on their end; there's nothing more we
+  can do about it from this plugin until they add support for showing an
+  action's real results.
+
+
+-------------------------------------------------------------------------------
   v0.11.2
 -------------------------------------------------------------------------------
 

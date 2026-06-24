@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.11.2
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.11.3
   Author: Jumpstile
 ===============================================================================
 

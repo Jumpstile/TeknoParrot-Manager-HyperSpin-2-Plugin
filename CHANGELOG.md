@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.3
+
+- Revert the v0.11.2 `message`-field experiment (`WithDisplayMessage`). Confirmed via live testing against HyperHQ 2.0.296-beta that the UI ignores it entirely -- a real `preview_dgvoodoo2_setup` response with a populated `result` object and a `message` field still produced only the same generic "completed successfully" toast as before, with no way for the user to see the actual result anywhere short of the plugin's own raw Logs tab JSON. Reported upstream to HyperSpin-FE as a 4th UI finding (action result data isn't rendered anywhere). Since the field had no effect and added complexity for no benefit, removing it rather than leaving dead code in place.
+- 4 tests removed (101/101 passing) that existed solely to cover the now-removed `WithDisplayMessage` behavior.
+
 ## 0.11.2
 
 - Fix: `canonicalArchetype` correction (`TryCorrectCanonicalArchetypeApi`) wrote the corrected Input API to disk but left the in-memory reference-game pool entry holding the stale pre-correction value. If a different, non-reference profile propagated FROM that just-corrected reference game later in the *same* run (e.g. alphabetically after it), it would copy the old Input API instead of the corrected one -- the file on disk was right, but a same-run sibling could still get the wrong value. Ported from upstream `teknoparrot-manager` v0.99.20 (issue #1), found via the same upstream-diff check that caught v0.11.1's fix. `ArchetypeEntry.InputApi` is now a mutable property (was an immutable positional-record parameter) so the correction is visible in place to every later iteration of the same propagation run, including during a dry-run preview (deliberately unconditional on `dryRun`, matching upstream, so a preview stays internally consistent with itself).
