@@ -181,6 +181,27 @@ needs the self-elevation helper noted in the original architecture plan
 plugin process) rather than the original script's "close and re-run as
 Administrator" instruction.
 
+When this phase starts, port these two upstream hardenings too (found via
+the v0.99.20 -> v0.99.23 sync, 2026-06-24, before this phase existed --
+make sure to re-check for anything newer at that point too):
+- **Issue #3**: every Postgres helper that currently would set
+  `$env:PGPASSWORD` for a psql.exe/pg_dump.exe/etc. call should instead
+  write a locked-down (`icacls`) temporary `.pgpass` file and point
+  `PGPASSFILE` at it -- avoids the password being visible in the child
+  process's own environment block (Task Manager/Process Explorer/WMI) for
+  the duration of the call. `New-PostgresPgPassFile`/
+  `Remove-PostgresPgPassFile` in the PS source (tpm.ps1 ~2148) are the
+  reference implementation.
+- **Issue #4**: before any destructive `msiexec /x` uninstall of a
+  detected partial/failed PostgreSQL install, cross-check PostgreSQL's own
+  `HKLM:\SOFTWARE\PostgreSQL\Installations\*` registry record (written by
+  the EnterpriseDB installer, independent of the generic Windows Installer
+  Uninstall key) against the expected install directory -- refuse to
+  uninstall only on an explicit mismatch (record exists, points elsewhere),
+  never on the record's mere absence (a partial install may never have
+  reached the stage that writes it). `Test-PostgresInstallationsRegistry`
+  in the PS source (tpm.ps1 ~3602) is the reference implementation.
+
 ## Out of scope (confirmed, not revisited)
 LaunchBox direct integration, LaunchBox XML export, RetroBat/Batocera
 naming mode -- HyperSpin 2 only per the original project decision.
