@@ -161,6 +161,17 @@ deploy the field config) and a free third-party plugin covering a
 different game set -- with a conflict-resolution prompt for games covered
 by both.
 
+When this phase starts, carry forward this upstream fix too (found via
+the sync check, 2026-06-24, before this phase existed -- re-check for
+anything newer at that point too): **v0.99.25** split
+`Invoke-FFBPluginSetup`'s single "no match" skip counter into two --
+`skippedNoMatch` (game isn't in the plugin's supported-games table at
+all) and `skippedDllMissing` (game IS matched, but the 32-bit/64-bit
+plugin DLL hasn't been downloaded locally yet). The original combined
+counter made a fixable "go download the DLL" case look identical to a
+genuinely unsupported game. Keep these as two separate result counts in
+the C# port's result record.
+
 ### Phase 8 -- BepInEx update check (Group B, update-only by design)
 Port `Invoke-BepInExUpdateCheck` + `Get-BepInExInstalledVersion`/
 `Get-BepInExInstalledArch`/`Get-BepInExLatestRelease` (tpm.ps1:4375, 4349,
@@ -201,6 +212,16 @@ make sure to re-check for anything newer at that point too):
   never on the record's mere absence (a partial install may never have
   reached the stage that writes it). `Test-PostgresInstallationsRegistry`
   in the PS source (tpm.ps1 ~3602) is the reference implementation.
+- **v0.99.24** (found in the same sync as above, applied 2026-06-24):
+  `Test-PostgresInstallationsRegistry`'s and the partial-install removal
+  check's path comparisons were changed from `-like`/`-notlike` to
+  `-ieq`/`-ine` -- `-like` is a wildcard pattern match in PowerShell, not
+  exact equality, so a literal path comparison using it could
+  mis-match/miss if either path ever contained `[`, `]`, or `*`. No direct
+  equivalent risk exists in C# (`string.Equals(..., OrdinalIgnoreCase)` is
+  already exact, never wildcard), but keep this in mind if any future
+  helper here is tempted to reach for a "looks like a path matcher"
+  library/regex instead of plain exact-equality comparison.
 
 ## Out of scope (confirmed, not revisited)
 LaunchBox direct integration, LaunchBox XML export, RetroBat/Batocera
