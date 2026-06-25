@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -215,6 +215,22 @@
       "required": false
     },
     {
+      "key": "romZipSourcePath",
+      "type": "directory",
+      "label": "Rom Zip Source (optional)",
+      "description": "A folder of game ZIPs (e.g. a NAS share or a local staging drive) this plugin can extract for you into your Games Folder, skipping anything already extracted and up to date. Leave blank to skip AutoSync entirely.",
+      "defaultValue": "",
+      "required": false
+    },
+    {
+      "key": "romZipSourceSupplementaryPath",
+      "type": "directory",
+      "label": "Rom Zip Source -- Supplementary (optional)",
+      "description": "A second, optional folder of game ZIPs, synced the same way as the main Rom Zip Source above. Leave blank if you only have one source.",
+      "defaultValue": "",
+      "required": false
+    },
+    {
       "key": "downloadMedia",
       "type": "boolean",
       "label": "Download Game Artwork",
@@ -254,6 +270,23 @@
       "icon": "search",
       "type": "secondary",
       "confirmation": false
+    },
+    {
+      "id": "preview_autosync",
+      "label": "Preview AutoSync",
+      "description": "See which games would be extracted from your configured Rom Zip Source folder(s), without changing anything yet.",
+      "icon": "eye",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "apply_autosync",
+      "label": "Apply AutoSync",
+      "description": "Extracts new or changed games from your configured Rom Zip Source folder(s) into your Games Folder. Skips anything already extracted and up to date. Run this before Register Profiles so the games it extracts can be registered.",
+      "icon": "download",
+      "type": "primary",
+      "confirmation": true,
+      "confirmationMessage": "This extracts new or updated games from your configured source folder(s) into your Games Folder. If a game's folder already exists and needs updating, it is deleted and re-extracted fresh -- not backed up first, since it's always reproducible from the source ZIP. Nothing already up to date is touched. Continue?"
     },
     {
       "id": "preview_registration",

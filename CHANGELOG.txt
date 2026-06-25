@@ -7,6 +7,23 @@
 
 
 -------------------------------------------------------------------------------
+  v0.15.0
+-------------------------------------------------------------------------------
+
+  Added AutoSync -- if you keep your game ZIPs on a NAS or a local staging
+  drive, this plugin can now extract new or updated ones straight into
+  your Games Folder for you, skipping anything already extracted and up
+  to date. Supports an optional second source folder too. New buttons:
+  "Preview AutoSync" and "Apply AutoSync." See the README's AUTOSYNC
+  section for the full walkthrough.
+
+  Also did a documentation pass to match the original script's docs more
+  closely -- added a table of contents and a glossary of terms to
+  README.txt and README.md, and filled in a few README.md sections that
+  had fallen behind on earlier features.
+
+
+-------------------------------------------------------------------------------
   v0.14.0
 -------------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.14.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.15.0
   Author: Jumpstile
 ===============================================================================
 
@@ -8,6 +8,37 @@
   automatically instead of game by game.
 
   For a one-page version, see QUICKSTART.txt.
+
+
+-------------------------------------------------------------------------------
+  CONTENTS
+-------------------------------------------------------------------------------
+
+  This is a plain-text file, so these aren't clickable -- search (Ctrl+F /
+  Find) for the exact heading text shown below (in capitals) and it will
+  jump straight to that section.
+
+    WHO IS THIS FOR?
+    GLOSSARY                       -- unfamiliar terms used throughout this file
+    WHAT IT DOES
+    WHAT IT WILL NOT DO
+    REQUIREMENTS
+    INSTALLING THE PLUGIN
+    CONTROL SETUP (PROPAGATION)
+    CROSSHAIR SETUP
+    GPU COMPATIBILITY FIX
+    RESHADE SETUP
+    DGVOODOO2 SETUP
+    BEPINEX UPDATE CHECK
+    FORCE FEEDBACK SETUP
+    POSTGRESQL SETUP
+    AUTOSYNC
+    BACKING UP AND RESTORING
+    RELATIONSHIP TO TEKNOPARROT MANAGER
+    SAFETY
+    GOOD TO KNOW
+    CREDITS
+    SUPPORT THIS PROJECT
 
 
 -------------------------------------------------------------------------------
@@ -22,6 +53,7 @@
 
     -- have several TeknoParrot games and don't want to register or bind
        controls for each one individually
+    -- store games as ZIPs on a NAS and want automated extraction
     -- use lightgun games and want crosshairs and cursor-hiding set up
        across all of them at once
     -- want your TeknoParrot games to appear in HyperHQ alongside the rest
@@ -29,6 +61,81 @@
 
   You may not need this plugin if you only have a handful of games and
   prefer to set everything up by hand in TeknoParrotUI.
+
+
+-------------------------------------------------------------------------------
+  GLOSSARY
+-------------------------------------------------------------------------------
+
+  Terms used throughout this file, in the order you're likely to need them.
+
+  GameProfile          The template TeknoParrot ships for one specific game
+                       (e.g. StreetFighterIII3rdStrike.xml). Lives in
+                       TeknoParrot's GameProfiles folder. Defines what
+                       fields/buttons that game has, but isn't itself
+                       pointed at your copy of the game.
+
+  UserProfile          Your own copy of a GameProfile, created when a game
+                       is registered. Lives in TeknoParrot's UserProfiles
+                       folder, one file per registered game. This is the
+                       file that actually has your GamePath, your control
+                       bindings, and your per-game settings.
+
+  Profile Code         The filename (without .xml) shared by a GameProfile
+                       and its UserProfile, e.g. "StreetFighterIII3rdStrike".
+                       Used throughout this plugin's actions and logs to
+                       refer to one specific game profile.
+
+  GamePath             The field inside a UserProfile pointing at that
+                       game's actual executable on your disk. Registration
+                       is, at its core, finding the right exe and writing
+                       it into this field.
+
+  Registration         Matching an extracted game folder to the correct
+                       GameProfile and creating its UserProfile with the
+                       right GamePath. See INSTALLING THE PLUGIN below.
+
+  AutoSync             Extracts game ZIPs from a folder you point this
+                       plugin at (a NAS share, a local staging drive) into
+                       your Games Folder, skipping anything already
+                       extracted and up to date. See AUTOSYNC below.
+
+  Fuzzy matching       How this plugin figures out which GameProfile an
+                       extracted folder belongs to when the executable name
+                       alone is ambiguous (shared by several games).
+                       Compares the folder name against each candidate
+                       profile's code.
+
+  Collection Dat       An optional community-maintained index (from the
+                       Eggmansworld TeknoParrot collection) mapping exact
+                       ZIP names to the right profile code. When available,
+                       used instead of fuzzy matching for ambiguous games,
+                       since it's exact rather than a best guess.
+
+  Control propagation  This plugin's way of avoiding rebinding every game
+                       in a control family by hand: bind ONE game per type
+                       in TeknoParrot's own UI, and this plugin copies
+                       those same bindings to every other unbound game of
+                       that type. See CONTROL SETUP (PROPAGATION) below.
+
+  Archetype / reference game
+                       A game with enough buttons already bound (manually,
+                       by you, in TeknoParrot's own UI) to be used as the
+                       source for control propagation into other games of
+                       the same family. Never modified by propagation
+                       itself -- only ever a source, never a target.
+
+  Preview / Apply      Every action that changes something on disk has a
+                       matching preview action that shows exactly what
+                       would happen first, without writing anything.
+
+  gameCodes            An optional list of specific Profile Codes you can
+                       pass to most actions to limit them to just those
+                       games, instead of every eligible game.
+
+  Backup               A timestamped copy of your profiles, taken
+                       automatically before any change that could need
+                       undoing. See BACKING UP AND RESTORING below.
 
 
 -------------------------------------------------------------------------------
@@ -443,6 +550,47 @@
 
 
 -------------------------------------------------------------------------------
+  AUTOSYNC
+-------------------------------------------------------------------------------
+
+  If you keep your game ZIPs on a NAS or a local staging drive, AutoSync
+  extracts new or updated ones straight into your Games Folder for you,
+  skipping anything already extracted and up to date.
+
+  SETUP
+
+    1. In Settings, point "Rom Zip Source" at the folder with your game
+       ZIPs. Optionally, point "Rom Zip Source -- Supplementary" at a
+       second folder too -- both are synced the same way.
+
+  RUNNING IT
+
+    1. Click "Preview AutoSync" to see which games would be extracted.
+    2. Click "Apply AutoSync" to actually extract them.
+
+  HOW IT DECIDES WHAT TO EXTRACT
+
+    - A game not yet extracted at all: extracted.
+    - A game whose ZIP changed size or date on the source since the last
+      run: re-extracted.
+    - A game already extracted and unchanged: left alone completely.
+
+    If a game DOES need extracting and its folder already exists (because
+    it changed on the source), that folder is deleted and replaced with a
+    fresh extraction -- it is NOT backed up first, since it's always
+    re-extractable from the same ZIP. Nothing that's already up to date is
+    ever touched.
+
+  You can pass `skipCodes` (always skip these, every run) and `gameCodes`
+  / `gameCodesSupplementary` (only extract these specific games, for one
+  run) to either action, the same way several other actions in this
+  plugin accept a `gameCodes` override list.
+
+  After extracting, run Registration (see INSTALLING THE PLUGIN above) to
+  register the newly extracted games with TeknoParrot.
+
+
+-------------------------------------------------------------------------------
   BACKING UP AND RESTORING
 -------------------------------------------------------------------------------
 
@@ -472,9 +620,11 @@
                   deployment, cursor-hide setup, health reporting,
                   backups, HyperHQ library sync, GPU compatibility fixes,
                   ReShade setup, dgVoodoo2 setup, BepInEx update
-                  checking, force feedback setup, and PostgreSQL setup --
+                  checking, force feedback setup, PostgreSQL setup, and
+                  AutoSync (ZIP extraction from a NAS/source folder) --
                   every feature on the original project's roadmap for
-                  this plugin is now ported.
+                  this plugin is now ported, plus AutoSync added after a
+                  direct user request.
 
   HyperHQ remains your launcher and library manager; this plugin exists to
   give it the structured TeknoParrot profile and import behavior it needs.

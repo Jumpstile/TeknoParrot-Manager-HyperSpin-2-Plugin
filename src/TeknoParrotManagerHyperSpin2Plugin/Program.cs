@@ -16,7 +16,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.14.0";
+    internal const string PluginVersion = "0.15.0";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -787,6 +787,46 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return new { success = true, result };
     }
 
+    private static async Task<object> PreviewAutoSync(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        return await RunAutoSync(data, dryRun: true).ConfigureAwait(false);
+    }
+
+    private static async Task<object> ApplyAutoSync(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        return await RunAutoSync(data, dryRun: false).ConfigureAwait(false);
+    }
+
+    private static async Task<object> RunAutoSync(JsonElement data, bool dryRun)
+    {
+        if (string.IsNullOrWhiteSpace(settings.RomZipSourcePath))
+        {
+            return new { success = false, error = "No ROM ZIP source folder is configured (\"Rom Zip Source\" setting)." };
+        }
+
+        if (!Directory.Exists(settings.RomZipSourcePath))
+        {
+            return new { success = false, error = "The configured ROM ZIP source folder does not exist." };
+        }
+
+        var skipCodes = GetStringArray(data, "skipCodes");
+        var gameCodes = GetStringArray(data, "gameCodes");
+        var gameCodesSupplementary = GetStringArray(data, "gameCodesSupplementary");
+
+        var aids = await TeknoParrotProfileScanner.BuildRegistrationAidsAsync(settings, ProfileSetHttpClient, LogAsyncSink).ConfigureAwait(false);
+        var scan = TeknoParrotProfileScanner.Scan(settings);
+        if (string.IsNullOrWhiteSpace(scan.GamesRootPath))
+        {
+            return new { success = false, error = "Games Folder is not configured." };
+        }
+
+        var result = TeknoParrotProfileScanner.RunAutoSyncBothSources(
+            settings, skipCodes, gameCodes, gameCodesSupplementary, dryRun, aids.DatIndex, scan.UserProfilesPath, LogAsyncSink);
+        return new { success = true, result };
+    }
+
     private static object RepairGamePaths(JsonElement data)
     {
         settings = MergeSettings(settings, data);
@@ -844,6 +884,8 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "apply_postgres_game_setup" => await ApplyPostgresGameSetup(data),
             "backup_postgres_databases" => await BackupPostgresDatabases(data),
             "restore_postgres_backup" => await RestorePostgresBackup(data),
+            "preview_autosync" => await PreviewAutoSync(data),
+            "apply_autosync" => await ApplyAutoSync(data),
             "preview_sync" => await SyncGames(SetDryRun(data)),
             "sync_games" => await SyncGames(data),
             "backup_profiles" => BackupProfiles(settings),
@@ -1579,6 +1621,12 @@ public sealed class TeknoParrotSettings
     public string DgVoodoo2PresetsPath { get; set; } = string.Empty;
     public bool DownloadMedia { get; set; } = true;
     public bool AutoSyncOnDbConnect { get; set; } = false;
+    // Unrelated to AutoSyncOnDbConnect above -- that's this plugin's own
+    // "auto-run HyperHQ library sync on DB connect" setting. These two
+    // are the ROM-ZIP-extraction-from-a-NAS AutoSync feature ported from
+    // the original PowerShell tool.
+    public string RomZipSourcePath { get; set; } = string.Empty;
+    public string RomZipSourceSupplementaryPath { get; set; } = string.Empty;
 
     public TeknoParrotSettings MergeWith(TeknoParrotSettings other)
     {
@@ -1602,7 +1650,9 @@ public sealed class TeknoParrotSettings
             DgVoodoo2SourcePath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.DgVoodoo2SourcePath, DgVoodoo2SourcePath),
             DgVoodoo2PresetsPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.DgVoodoo2PresetsPath, DgVoodoo2PresetsPath),
             DownloadMedia = other.DownloadMedia,
-            AutoSyncOnDbConnect = other.AutoSyncOnDbConnect
+            AutoSyncOnDbConnect = other.AutoSyncOnDbConnect,
+            RomZipSourcePath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.RomZipSourcePath, RomZipSourcePath),
+            RomZipSourceSupplementaryPath = TeknoParrotManagerHyperSpin2PluginMain.FirstNonEmpty(other.RomZipSourceSupplementaryPath, RomZipSourceSupplementaryPath)
         };
     }
 }

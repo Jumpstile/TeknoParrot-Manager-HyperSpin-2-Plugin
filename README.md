@@ -16,6 +16,20 @@ merge from. `.github/workflows/watch-upstream.yml` watches that repo's
 `upstream-sync`) whenever new commits land, so a human can review and
 decide what's worth porting. See ROADMAP.md for what's already ported.
 
+## Table of Contents
+
+- [What It Does](#what-it-does)
+- [Glossary](#glossary)
+- [Relationship To TeknoParrot Manager](#relationship-to-teknoparrot-manager)
+- [HyperHQ Import Contract](#hyperhq-import-contract)
+- [Project Layout](#project-layout)
+- [Build And Test](#build-and-test)
+- [GitHub Releases](#github-releases)
+- [HyperHQ Runtime](#hyperhq-runtime)
+- [Safety Notes](#safety-notes)
+- [Credits](#credits)
+- [Support This Project](#support-this-project)
+
 ## What It Does
 
 - Validates TeknoParrot folder structure, `TeknoParrotUi.exe`, `UserProfiles`, `GameProfiles`, and `Icons`.
@@ -31,17 +45,38 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - Detects your GPU vendor (AMD/NVIDIA/Intel) via a local WMI query and applies the matching compatibility fix field to every registered profile that has one (`preview_gpu_fix` / `apply_gpu_fix`). Pure local detection plus profile XML edits -- no network calls.
 - Installs ReShade (`preview_reshade_setup` / `apply_reshade_setup`) using a user-supplied DLL (this plugin never downloads ReShade itself), auto-detecting each game's exe architecture and graphics API to pick the right DLL and destination filename, with Authenticode signature verification and a read-only `check_reshade_update` version check against reshade.me.
 - Installs dgVoodoo2 (`preview_dgvoodoo2_setup` / `apply_dgvoodoo2_setup`) using user-supplied DLLs (this plugin never downloads dgVoodoo2 itself), auto-detecting which registered games use DirectX 8, DirectDraw, or Glide and deploying only the DLL(s) each one needs. Zero network calls.
+- Updates an already-installed BepInEx to the latest version (`preview_bepinex_update` / `apply_bepinex_update`), downloaded straight from BepInEx's own official GitHub Releases. Never installs BepInEx for the first time.
+- Sets up force feedback (`preview_ffb_blaster_setup` / `apply_ffb_blaster_setup` for TeknoParrot's own FFB Blaster, `preview_ffb_plugin_setup` / `apply_ffb_plugin_setup` for the free, open-source FFB Arcade Plugin covering a different game set). A game covered by both prefers native FFB Blaster by default.
+- Installs PostgreSQL 8.3 (`apply_postgres_install`, self-elevated for that one step) and configures/backs up/restores per-game databases (`preview_postgres_game_setup` / `apply_postgres_game_setup` / `backup_postgres_databases` / `restore_postgres_backup`) for the small number of older titles that need it. Windows only.
+- Extracts game ZIPs from a configured source folder -- a NAS share or local staging drive -- into your Games Folder (`preview_autosync` / `apply_autosync`), skipping anything already extracted and up to date. Supports an optional second "supplementary" source folder synced the same way. See AutoSync's own section below.
 - Backs up and restores profile XML files, including a pre-restore backup before overwrite.
 - Creates and syncs the canonical HyperHQ system `Arcade (TeknoParrot)`.
 - Imports TeknoParrot profile XML files as launchable HyperHQ games.
 - Exposes a HyperHQ first-run wizard and plugin-page buttons for setup, health checks, registration preview, repair preview, control propagation preview, device survey, sync preview, sync, backup, and restore.
 
+## Glossary
+
+Terms used throughout this file and the codebase, in the order you're likely to need them.
+
+- **GameProfile** -- the template TeknoParrot ships for one specific game (e.g. `StreetFighterIII3rdStrike.xml`), living in TeknoParrot's `GameProfiles` folder. Defines what fields/buttons that game has, but isn't itself pointed at your copy of the game.
+- **UserProfile** -- your own copy of a `GameProfile`, created when a game is registered. Lives in `UserProfiles`, one file per registered game. Holds the real `GamePath`, control bindings, and per-game settings.
+- **Profile Code** -- the filename (without `.xml`) shared by a `GameProfile` and its `UserProfile`, used throughout this plugin's actions and logs to refer to one specific game.
+- **GamePath** -- the field inside a `UserProfile` pointing at that game's actual executable on disk. Registration is, at its core, finding the right exe and writing it into this field.
+- **Registration** -- matching an extracted game folder to the correct `GameProfile` and creating its `UserProfile` with the right `GamePath`.
+- **AutoSync** -- extracts game ZIPs from a configured source folder (a NAS share, a local staging drive) into the games install folder, skipping anything already extracted and up to date.
+- **Fuzzy matching** -- how this plugin figures out which `GameProfile` an extracted folder belongs to when the executable name alone is ambiguous (shared by several games), via Dice bigram similarity against each candidate profile's code.
+- **Collection Dat** -- an optional community-maintained index (the Eggmansworld TeknoParrot collection) mapping exact ZIP names to the right profile code. Used instead of fuzzy matching when available, since it's exact rather than a best guess.
+- **Control propagation** -- this plugin's way of avoiding rebinding every game in a control family by hand: bind one game per type in TeknoParrot's own UI, and this plugin copies those bindings to every other unbound game of that type.
+- **Archetype / reference game** -- a game with enough buttons already bound (by you, in TeknoParrot's own UI) to be used as the source for control propagation. Never modified by propagation itself -- only ever a source, never a target.
+- **Preview / Apply** -- every action that changes something on disk has a matching preview action (`preview_*`) that reports exactly what would happen first, without writing anything.
+- **`gameCodes`** -- an optional list of specific Profile Codes most actions accept to limit themselves to just those games, instead of every eligible game.
+- **Group A / Group B** -- this project's own internal classification (see ROADMAP.md), not a TeknoParrot or HyperHQ term: Group A features need no new permission (local-only, or operate on files the user already supplied); Group B features download and run/install a third-party binary, requiring an explicit Safety Notes boundary update and the user's own go-ahead before they ship.
+
 ## Relationship To TeknoParrot Manager
 
 TeknoParrot Manager includes many broader Windows setup and game-modification workflows. This plugin intentionally keeps the HyperHQ surface narrower:
 
-- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, GPU compatibility fix, ReShade setup, dgVoodoo2 setup, health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration.
-- Not included yet: FFB setup, Postgres setup, and BepInEx deployment. See ROADMAP.md.
+- Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, GPU compatibility fix, ReShade setup, dgVoodoo2 setup, BepInEx update check, force feedback setup, PostgreSQL setup, AutoSync (ZIP extraction from a NAS/source folder), health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration -- every feature on the original project's roadmap for this plugin is now ported, plus AutoSync added after a direct user request. See ROADMAP.md.
 
 That boundary is deliberate. HyperHQ should remain the launcher and library manager, while the plugin extends TeknoParrot support where HyperHQ needs structured profile and import behavior.
 

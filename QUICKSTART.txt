@@ -1,11 +1,14 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.14.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.15.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
   Sets up TeknoParrot games inside HyperSpin 2 / HyperHQ, copies controls
   across games of the same type, and deploys lightgun crosshairs.
   Full details: README.txt.
+
+  Unfamiliar term (GamePath, UserProfile, archetype, etc.)? See the
+  GLOSSARY section near the top of README.txt.
 
 
   REQUIREMENTS
@@ -63,6 +66,18 @@
   -----------------
   Click "Health Check" any time to see how many games are working,
   missing a profile, or have a broken path. Read-only -- changes nothing.
+
+
+  EXTRACT YOUR GAMES (OPTIONAL -- IF YOUR ZIPS ARE ON A NAS)
+  ------------------------------------------------------------
+  If you keep your game ZIPs on a NAS or a local staging drive, AutoSync
+  can extract them straight into your Games Folder for you.
+
+  1. In Settings, point "Rom Zip Source" at the folder with your ZIPs.
+  2. Click "Preview AutoSync" to see what would be extracted.
+  3. Click "Apply AutoSync" to extract it for real.
+
+  Skip this section entirely if your games are already extracted.
 
 
   REGISTER YOUR GAMES

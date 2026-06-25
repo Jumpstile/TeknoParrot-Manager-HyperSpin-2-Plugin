@@ -276,6 +276,41 @@ make sure to re-check for anything newer at that point too):
   helper here is tempted to reach for a "looks like a path matcher"
   library/regex instead of plain exact-equality comparison.
 
+### Phase 10 -- AutoSync (Group A) -- DONE (v0.15.0)
+Not part of the original phase research (Phases 1-9 above) -- added after
+a direct user request post-v0.14.0. Ports `Invoke-AutoSync` +
+`Expand-ZipFileSafe` + `Get-StagingFolderMap` + `Resolve-RegisteredGameFolder`
+(`tpmanager-v7.ps1:2816, 2747, 5765, 5793`). Extracts game ZIPs from a
+configured source folder (a NAS share, a local staging drive) into the
+games install folder, skipping anything already extracted and up to
+date via a persisted sync-state file (NAS ZIP size + mtime per game).
+Optionally supports a second "supplementary" source folder, synced the
+same way against the same install folder and sync-state file.
+
+Group A: the ZIP source is a folder the user points this plugin at
+themselves, same trust tier as `GamesRootPath`/`ReShadeSourceDllPath` --
+not something this plugin fetches from the internet.
+
+Implementation notes: `Invoke-AutoSync` was already fully batch/non-
+interactive in the original (`noSync`/`onlySync` array parameters) --
+this ported directly onto this plugin's existing `gameCodes`-override
+convention, with no interactive picker
+(`Select-GamesInteractive`/`Select-GamesInteractiveCombined`) to adapt.
+Reuses existing infrastructure rather than reimplementing it:
+`TeknoParrotProfileScanner.ExtractZipSafe` (already zip-slip-guarded;
+deliberately skips the original's `\\?\` extended-length-path prefix
+trick, a .NET Framework/PowerShell 5.1-specific MAX_PATH workaround this
+project's net10.0 target doesn't need -- `System.IO` supports long paths
+natively on Windows 10+) and `BuildRegistrationAidsAsync`'s dat index +
+UserProfiles for `ResolveRegisteredGameFolder`'s fallback matching.
+Deliberately not ported: `Test-IsNetworkPath`/`Measure-PathThroughput`/
+`Measure-PathWriteThroughput` (purely advisory diagnostics for an
+interactive terminal session warning about a slow NAS -- no correctness
+impact, and this plugin's action model has no interactive prompt to
+attach the warning to) and the `RawThrillsPathLimits` short-name
+suggestion table (a niche MAX_PATH-avoidance aid, moot for the same
+reason as the `\\?\` prefix trick).
+
 ## Out of scope (confirmed, not revisited)
 LaunchBox direct integration, LaunchBox XML export, RetroBat/Batocera
 naming mode -- HyperSpin 2 only per the original project decision.
