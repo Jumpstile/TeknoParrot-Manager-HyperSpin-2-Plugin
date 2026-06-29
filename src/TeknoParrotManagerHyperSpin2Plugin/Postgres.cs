@@ -171,8 +171,9 @@ public static partial class TeknoParrotProfileScanner
     }
 
     // Persists the encrypted superuser password to this plugin's own
-    // storage (write-to-temp-then-atomic-replace, per CLAUDE.md's
-    // convention), as a base64 string in a small JSON file. Never logs
+    // storage (write-to-temp-then-atomic-replace, this project's standard
+    // convention for any config write), as a base64 string in a small
+    // JSON file. Never logs
     // the password, encrypted or otherwise. Windows-only (see
     // EncryptPostgresPassword) -- callers must guard with
     // OperatingSystem.IsWindows() first.

@@ -4,8 +4,7 @@ This plugin currently covers profile scan/register/repair/backup/restore
 and HyperHQ import (see README's "What It Does"). The original PowerShell
 TeknoParrot Manager has eight more features this plugin doesn't have yet.
 This file tracks them as phases; check them off and update CHANGELOG.md as
-each one lands. CLAUDE.md's "see the approved plan at commit time" line
-refers to this file.
+each one lands. This file is the approved plan referenced at commit time.
 
 ## Important boundary to resolve before Phase B starts
 
