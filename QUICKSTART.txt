@@ -1,11 +1,15 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.15.0  --  QUICK START
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.16.0  --  QUICK START
   Author: Jumpstile
 ===============================================================================
 
   Sets up TeknoParrot games inside HyperSpin 2 / HyperHQ, copies controls
   across games of the same type, and deploys lightgun crosshairs.
   Full details: README.txt.
+
+  License: this is a standalone plugin using the same license as TeknoParrot
+  Manager. The release ZIP includes the full LICENSE. It does not bundle
+  TeknoParrot Manager source, assets, license files, or branding.
 
   Unfamiliar term (GamePath, UserProfile, archetype, etc.)? See the
   GLOSSARY section near the top of README.txt.
@@ -21,6 +25,8 @@
   BEFORE YOU START
   ----------------
   - Run TeknoParrotUi.exe once so it downloads its game profiles.
+  - For PCSX2x6 lightgun games, run PCSX2 once first so its setup is complete;
+    crosshair deployment stops safely if that initialization is missing.
   - Have at least one TeknoParrot game already extracted/installed.
 
 

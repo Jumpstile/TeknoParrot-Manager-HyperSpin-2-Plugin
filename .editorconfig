@@ -1,0 +1,42 @@
+root = true
+
+[*.cs]
+# This executable exposes JSON DTOs and Socket.IO callbacks to HyperHQ. The
+# public shapes below are wire-contract types, not a reusable class library;
+# changing them for library-style API rules would change the protocol or JSON.
+dotnet_diagnostic.CA1002.severity = none
+dotnet_diagnostic.CA1003.severity = none
+dotnet_diagnostic.CA1056.severity = none
+dotnet_diagnostic.CA1515.severity = none
+dotnet_diagnostic.CA1819.severity = none
+dotnet_diagnostic.CA2227.severity = none
+
+# These are library guidance rules that do not identify a plugin correctness
+# or security defect here. Synchronous writes are intentional around atomic
+# replacement and the elevated PostgreSQL worker; ConfigureAwait is not
+# required by this executable's application-level async flow.
+dotnet_diagnostic.CA1805.severity = none
+dotnet_diagnostic.CA1849.severity = none
+dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.CA1308.severity = none
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1861.severity = none
+# The plugin deliberately converts untrusted external results and protocol
+# failures into logged operation results at its public boundaries. Nullable
+# reference types and explicit guards remain the runtime contract; these rules
+# cannot distinguish that boundary pattern from a reusable class library.
+dotnet_diagnostic.CA1031.severity = none
+dotnet_diagnostic.CA1062.severity = none
+dotnet_diagnostic.CA1054.severity = none
+dotnet_diagnostic.CA1304.severity = none
+dotnet_diagnostic.CA1307.severity = none
+dotnet_diagnostic.CA1311.severity = none
+dotnet_diagnostic.CA1508.severity = none
+
+# ExtractZipSafe performs two containment checks immediately before writing and
+# has regression tests for rooted and traversal entries. CA5389 does not trace
+# the custom IsPathInside helper, so this is a documented analyzer limitation,
+# not an unreviewed zip-slip suppression.
+dotnet_diagnostic.CA5389.severity = none
+dotnet_diagnostic.CA1303.severity = none

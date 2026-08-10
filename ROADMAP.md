@@ -106,12 +106,17 @@ Port `Invoke-CrosshairSetup` + `Export-CrosshairPreview` (tpm.ps1:2293,
 folder plus an HTML preview; per the earlier base-adoption decision these
 ship as packaged plugin assets under `assets/` (resolved, not revisited
 here -- see project memory). Maps to a `selection-list` wizard/action step
-since HyperHQ has no native image-preview step type.
+since HyperHQ has no native image-preview step type. The PCSX2x6 special
+case follows the RC3 ownership boundary: it resolves the emulator data root
+from `portable.txt`, requires an initialized `PCSX2.ini`, and writes only
+TPM-owned `crosshairs/P1.png` and `crosshairs/P2.png` without editing the
+emulator configuration.
 
 ### Phase 3 -- Cursor-hide setup (Group A, smallest) -- DONE (v0.4.0)
 Port `Invoke-CursorHideSetup` (tpm.ps1:2507). Pure profile XML field
-writes (PCSX2 cursor path fields per `Set-Pcsx2CursorPaths`, tpm.ps1:2241)
--- no third-party downloads, no new permissions.
+writes -- no third-party downloads, no new permissions. PCSX2x6 emulator
+cursor-path settings are intentionally not written by this plugin; they
+remain emulator-owned and read-only under the RC3 contract.
 
 ### Phase 4 -- ReShade setup (Group A + one new read-only permission) -- DONE (v0.10.0)
 Port `Invoke-ReShadeSetup` + `Test-ReShadeDllSignature` +
@@ -309,6 +314,18 @@ impact, and this plugin's action model has no interactive prompt to
 attach the warning to) and the `RawThrillsPathLimits` short-name
 suggestion table (a niche MAX_PATH-avoidance aid, moot for the same
 reason as the `\\?\` prefix trick).
+
+## RC3 reconciliation (2026-08-08)
+
+The manager's RC3 range was reviewed against this plugin's current sync
+state. Only the PCSX2x6 crosshair ownership/data-root behavior is applicable
+to this plugin's runtime. The manager's ECVF certification harness, WinPS 5.1
+test boundary, standalone first-run prompt, and broader profile/runtime
+workflows remain standalone-manager concerns. The exact commit mapping and
+evidence are recorded in
+`docs/UPSTREAM-RC3-RECONCILIATION.md`.
+
+The plugin does not copy manager source code. The rights holder approved standalone distribution of v0.16.0 and later under the matching license in LICENSE, with no bundling of TeknoParrot Manager source, assets, license files, or branding beyond factual compatibility references. The exact approval and scope are recorded in plugin issue #25.
 
 ## Out of scope (confirmed, not revisited)
 LaunchBox direct integration, LaunchBox XML export, RetroBat/Batocera

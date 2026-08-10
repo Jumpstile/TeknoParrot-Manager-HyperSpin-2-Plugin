@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.16.0
+
+- Reconcile the RC3 PCSX2x6 crosshair behavior with the manager's ownership
+  contract. The plugin now resolves the emulator data root from `portable.txt`,
+  requires `pcsx2-qtx64.exe` and initialized `PCSX2.ini` section markers, and
+  writes only TPM-owned `crosshairs/P1.png` and `P2.png`. It no longer writes
+  legacy PCSX2 cursor-path fields or places PNGs beside the emulator executable.
+  Unknown, incomplete, rooted, or escaping data-root states fail closed, and
+  the plugin does not launch PCSX2's first-run setup.
+- Rights-holder approval is recorded for standalone distribution of v0.16.0 and later. The matching TeknoParrot Manager source-available personal/non-commercial license is included in the repository and release package. Standalone packages must not bundle TeknoParrot Manager source, assets, license files, or branding beyond factual compatibility references.
+- Update System.Security.Cryptography.Xml to 10.0.10; the live NuGet vulnerability
+  audit reports no vulnerable packages.
+- Add regression coverage for default/custom data roots, unchanged emulator
+  INI bytes, incomplete initialization, and path traversal rejection. Record
+  the full RC3 applicability review in `docs/UPSTREAM-RC3-RECONCILIATION.md`.
+
 ## 0.15.0
 
 - Add AutoSync (ROADMAP.md Phase 10 -- not part of the original phase list, added after a direct user request post-v0.14.0), porting the original PowerShell tool's `Invoke-AutoSync`/`Expand-ZipFileSafe`/`Get-StagingFolderMap`/`Resolve-RegisteredGameFolder`. Extracts game ZIPs from a configured source folder (a NAS share, a local staging drive) into the games install folder, skipping anything already extracted and up to date via a persisted sync-state file (NAS ZIP size + mtime). Optionally supports a second "supplementary" source folder, synced the same way against the same install folder and sync-state file. Group A -- no new permission; the source is a folder the user points the plugin at themselves, same trust tier as `GamesRootPath`/`ReShadeSourceDllPath`.

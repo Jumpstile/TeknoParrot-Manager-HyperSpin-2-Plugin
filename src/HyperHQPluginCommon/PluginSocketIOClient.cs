@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace HyperAI.Plugin.SocketIO
 {
-    public class PluginSocketIOClient : IDisposable
+    public sealed class PluginSocketIOClient : IDisposable
     {
         private ClientWebSocket webSocket;
         private readonly string pluginId;
@@ -36,10 +36,12 @@ namespace HyperAI.Plugin.SocketIO
 
         public PluginSocketIOClient(string pluginId, string authToken, int serverPort)
         {
+            ArgumentNullException.ThrowIfNull(pluginId);
+            ArgumentNullException.ThrowIfNull(authToken);
             this.pluginId = pluginId;
             this.authToken = authToken;
             this.serverPort = serverPort;
-            this.logPrefix = pluginId.ToUpper();
+            this.logPrefix = pluginId.ToUpperInvariant();
             this.cancellationTokenSource = new CancellationTokenSource();
             this.eventHandlers = new Dictionary<string, Action<JsonElement>>();
             this.pendingResponses = new Dictionary<string, TaskCompletionSource<JsonElement>>();
@@ -153,7 +155,7 @@ namespace HyperAI.Plugin.SocketIO
                     var error = response.TryGetProperty("error", out var errorProp)
                         ? errorProp.GetString()
                         : "Unknown error";
-                    throw new Exception($"File request failed: {error}");
+                    throw new InvalidOperationException($"File request failed: {error}");
                 }
             }
             finally
@@ -190,7 +192,7 @@ namespace HyperAI.Plugin.SocketIO
                     var error = response.TryGetProperty("error", out var errorProp)
                         ? errorProp.GetString()
                         : "Unknown error";
-                    throw new Exception($"Data request failed: {error}");
+                    throw new InvalidOperationException($"Data request failed: {error}");
                 }
             }
             finally
@@ -241,18 +243,18 @@ namespace HyperAI.Plugin.SocketIO
             }
 
             var hasSensitivePayload =
-                value.IndexOf("cookie", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("authorization", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("token", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("session", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("apikey", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("api_key", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("\"user\"", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("\"username\"", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("password", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("secret", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("credential", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                value.IndexOf("cheevos_password", StringComparison.OrdinalIgnoreCase) >= 0;
+                value.Contains("cookie", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("authorization", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("token", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("session", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("apikey", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("api_key", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("\"user\"", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("\"username\"", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("password", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("secret", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("credential", StringComparison.OrdinalIgnoreCase) ||
+                value.Contains("cheevos_password", StringComparison.OrdinalIgnoreCase);
 
             if (hasSensitivePayload || value.Length > 1000)
             {
@@ -481,10 +483,10 @@ namespace HyperAI.Plugin.SocketIO
                 }
 
                 // Call custom event handlers
-                if (eventHandlers.ContainsKey(eventName ?? ""))
+                if (eventHandlers.TryGetValue(eventName ?? "", out var eventHandler))
                 {
                     await LogAsync($"Calling custom event handler for: {eventName}");
-                    eventHandlers[eventName!](eventPayload);
+                    eventHandler(eventPayload);
                 }
                 else
                 {
@@ -554,9 +556,9 @@ namespace HyperAI.Plugin.SocketIO
             if (data.TryGetProperty("requestId", out var requestIdProp))
             {
                 var requestId = requestIdProp.GetString();
-                if (requestId != null && pendingResponses.ContainsKey(requestId))
+                if (requestId != null && pendingResponses.TryGetValue(requestId, out var pending))
                 {
-                    pendingResponses[requestId].SetResult(data);
+                    pending.SetResult(data);
                 }
             }
         }
@@ -566,9 +568,9 @@ namespace HyperAI.Plugin.SocketIO
             if (data.TryGetProperty("requestId", out var requestIdProp))
             {
                 var requestId = requestIdProp.GetString();
-                if (requestId != null && pendingResponses.ContainsKey(requestId))
+                if (requestId != null && pendingResponses.TryGetValue(requestId, out var pending))
                 {
-                    pendingResponses[requestId].SetResult(data);
+                    pending.SetResult(data);
                 }
             }
         }
@@ -584,9 +586,9 @@ namespace HyperAI.Plugin.SocketIO
             if (data.TryGetProperty("requestId", out var requestIdProp))
             {
                 var requestId = requestIdProp.GetString();
-                if (requestId != null && pendingResponses.ContainsKey(requestId))
+                if (requestId != null && pendingResponses.TryGetValue(requestId, out var pending))
                 {
-                    pendingResponses[requestId].SetException(new Exception(message ?? "Unknown error"));
+                    pending.SetException(new InvalidOperationException(message ?? "Unknown error"));
                 }
             }
         }

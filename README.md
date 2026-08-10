@@ -21,6 +21,7 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - [What It Does](#what-it-does)
 - [Glossary](#glossary)
 - [Relationship To TeknoParrot Manager](#relationship-to-teknoparrot-manager)
+- [License And Distribution](#license-and-distribution)
 - [HyperHQ Import Contract](#hyperhq-import-contract)
 - [Project Layout](#project-layout)
 - [Build And Test](#build-and-test)
@@ -40,7 +41,7 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - Repairs broken or empty `GamePath` values only when the matching executable is unambiguous.
 - Copies control bindings from one game you've already bound (the "reference game" for that control type -- driving/lightgun/trackball/analog/button) to every other unbound game of the same type, matched by button function so a wheel value never lands on a gun. A reference game's own bindings are never changed by this. An optional control-overrides JSON file (`controlOverridesPath`) can pin a game to a specific reference game, override its auto-detected control type, exclude it from this copying entirely, or -- if two reference games of the same type disagree on their Input API setting -- tell the plugin which one is correct so the other one gets fixed to match (`canonicalArchetype`).
 - Offers a read-only device survey that recommends which control to bind for each game type based on what devices you have.
-- Deploys a chosen pair of P1/P2 crosshair images (321 bundled, or your own via `crosshairsPath`) to every registered lightgun game, including ElfLdr2 and PCSX2 (with `PCSX2.ini` `cursor_path` updates) special cases, and generates an HTML preview grid to browse them.
+- Deploys a chosen pair of P1/P2 crosshair images (321 bundled, or your own via `crosshairsPath`) to every registered lightgun game. ElfLdr2 and PCSX2x6 are handled as shared-emulator special cases; PCSX2x6 resolves its `portable.txt` data root, requires an initialized `PCSX2.ini`, writes only TPM-owned `crosshairs\P1.png`/`P2.png`, and never edits emulator-owned cursor settings. Generates an HTML preview grid to browse them.
 - Hides the Windows cursor for every registered lightgun game that defines a cursor-hide field.
 - Detects your GPU vendor (AMD/NVIDIA/Intel) via a local WMI query and applies the matching compatibility fix field to every registered profile that has one (`preview_gpu_fix` / `apply_gpu_fix`). Pure local detection plus profile XML edits -- no network calls.
 - Installs ReShade (`preview_reshade_setup` / `apply_reshade_setup`) using a user-supplied DLL (this plugin never downloads ReShade itself), auto-detecting each game's exe architecture and graphics API to pick the right DLL and destination filename, with Authenticode signature verification and a read-only `check_reshade_update` version check against reshade.me.
@@ -79,6 +80,20 @@ TeknoParrot Manager includes many broader Windows setup and game-modification wo
 - Included: profile discovery, missing profile registration (with dat-index and profile-code fuzzy fallback), unique path repair, control binding propagation, device survey, crosshair deployment, cursor-hide setup, GPU compatibility fix, ReShade setup, dgVoodoo2 setup, BepInEx update check, force feedback setup, PostgreSQL setup, AutoSync (ZIP extraction from a NAS/source folder), health reporting, backups, HyperHQ system/emulator/game import, and wizard/button integration -- every feature on the original project's roadmap for this plugin is now ported, plus AutoSync added after a direct user request. See ROADMAP.md.
 
 That boundary is deliberate. HyperHQ should remain the launcher and library manager, while the plugin extends TeknoParrot support where HyperHQ needs structured profile and import behavior.
+
+## License And Distribution
+
+This plugin uses the same source-available personal/non-commercial license as
+TeknoParrot Manager. The complete terms are in [LICENSE](LICENSE), and the
+license file is included in release ZIPs.
+
+The rights holder approves standalone distribution of the HyperSpin 2 plugin
+starting with v0.16.0 and later versions. The plugin may be distributed
+independently, but release packages must not bundle TeknoParrot Manager source,
+assets, license files, or branding beyond factual compatibility references.
+This repository is a from-scratch C# implementation and does not copy or
+bundle those manager materials. Third-party components remain subject to their
+own licenses.
 
 ## HyperHQ Import Contract
 
@@ -121,6 +136,7 @@ The `src` folder contains all buildable plugin source. `src/HyperHQPluginCommon`
 Requirements:
 
 - .NET SDK with `net10.0` support
+
 
 Commands:
 
@@ -168,6 +184,7 @@ only and are deliberately not packaged -- `README.txt`, `CHANGELOG.txt`, and
 - `TeknoParrotManagerHyperSpin2Plugin.exe`
 - `plugin.json`
 - `README.txt`, `CHANGELOG.txt`, `QUICKSTART.txt`
+- `LICENSE`
 - `icon.jpg`
 - `Crosshairs/` (321 curated crosshair PNGs used by the crosshair deployment action)
 - Any additional root-level `*.json` files, if added later
@@ -226,6 +243,7 @@ Supported execute actions:
 - Existing user profiles are not overwritten during registration.
 - Game path repair writes only when there is a unique executable match.
 - Restore creates a pre-restore backup of current profiles before replacing files.
+- PCSX2x6 crosshair deployment is ownership-aware: it requires `pcsx2-qtx64.exe` and an initialized `PCSX2.ini`, resolves only a relative data root contained under the emulator folder, writes TPM-owned PNGs under that data root, and leaves the emulator-owned INI untouched. It does not launch PCSX2's first-run setup.
 - The optional `eggmanDatPath` setting points at a collection dat -- either one the user already has, or one fetched live via `download_eggman_dat` (see below). Either way, the dat is parsed as data; it is never executed. ReShade and dgVoodoo2 are the same pattern: `reShadeSourceDllPath`/`reShadeSourceDll32Path`/`dgVoodoo2SourcePath` must point at files the user already has -- this plugin never downloads either tool itself, and dgVoodoo2 setup makes no network calls at all.
 - BepInEx update check (`preview_bepinex_update`/`apply_bepinex_update`) is the first exception to "never downloads a third-party binary": it downloads BepInEx's official release ZIP from BepInEx's own GitHub Releases and extracts it into a game's folder. It is strictly an UPDATE -- it never installs BepInEx for the first time, and only touches a game that already has a 64-bit BepInEx install (32-bit installs, and games without BepInEx at all, are left untouched). The asset's download URL is host-validated against `github.com`/`githubusercontent.com` before fetching, the release filename is sanitized and containment-checked before being used as a save path, the ZIP is extracted with a zip-slip guard (rejecting any entry that tries to traverse outside the destination folder), and the existing install is backed up before anything is overwritten. The plugin itself never runs the downloaded code -- it only places files; BepInEx's own existing Doorstop/winhttp.dll loader (already present from the prior install) is what loads the update, the next time the game's exe is launched.
 - FFB plugin setup (`preview_ffb_plugin_setup`/`apply_ffb_plugin_setup`) is the second exception: it downloads two small DLLs (`MAME32.dll`/`MAME64.dll`) and a live game-compatibility table directly from the free, open-source `mightymikem/FFBArcadePlugin` GitHub repo. The destination filename (read from that live table) is containment-checked before any write, an existing file at the destination is never overwritten, and the plugin itself never runs the downloaded code. FFB Blaster (`preview_ffb_blaster_setup`/`apply_ffb_blaster_setup`, TeknoParrot's own built-in force feedback) is a separate, local-only field toggle with no network calls at all -- it only has an effect with a paid TeknoParrot membership, which this plugin cannot verify, so the action's confirmation message states that prerequisite explicitly instead of guessing. A game covered by both is skipped for the third-party plugin by default (native preferred); an explicit `gameCodes` list overrides that for named games.

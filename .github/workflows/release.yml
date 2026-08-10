@@ -152,6 +152,11 @@ jobs:
           Copy-Item -LiteralPath $exePath -Destination (Join-Path $packageDir $exeName)
           Copy-Item -LiteralPath 'plugin.json' -Destination (Join-Path $packageDir 'plugin.json')
 
+          if (-not (Test-Path -LiteralPath 'LICENSE')) {
+            throw 'Package is missing the repository license: LICENSE'
+          }
+          Copy-Item -LiteralPath 'LICENSE' -Destination (Join-Path $packageDir 'LICENSE')
+
           $requiredTxtDocs = @('README.txt', 'CHANGELOG.txt', 'QUICKSTART.txt')
           foreach ($txtDoc in $requiredTxtDocs) {
             if (-not (Test-Path -LiteralPath $txtDoc)) {

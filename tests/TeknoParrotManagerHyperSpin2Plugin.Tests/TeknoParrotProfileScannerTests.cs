@@ -542,6 +542,96 @@ public class TeknoParrotProfileScannerTests
     }
 
     [Fact]
+    public void DeployCrosshairs_pcsx2x6_uses_the_resolved_data_root_and_leaves_emulator_ini_untouched()
+    {
+        using var fixture = new TeknoParrotFixture();
+        var folder = fixture.CreateCrosshairsFolder();
+        fixture.WriteTestPng(folder, "Dot.png");
+        fixture.WriteTestPng(folder, "Cross.png");
+        fixture.Settings.CrosshairsPath = folder;
+
+        var pcsx2 = PreparePcsx2(fixture, portableRoot: "", initialized: true);
+        fixture.WriteLightgunProfile("Pcsx2Game", Path.Combine(pcsx2.EmulatorPath, "pcsx2-qtx64.exe"), "Pcsx2x6");
+        var iniBefore = File.ReadAllBytes(pcsx2.IniPath);
+
+        var result = TeknoParrotProfileScanner.DeployCrosshairs(fixture.Settings, "Dot", "Cross", hideCursor: false, dryRun: false);
+
+        Assert.True(result.Success);
+        Assert.Equal(1, result.Deployed);
+        Assert.True(File.Exists(Path.Combine(pcsx2.DataRoot, "crosshairs", "P1.png")));
+        Assert.True(File.Exists(Path.Combine(pcsx2.DataRoot, "crosshairs", "P2.png")));
+        Assert.False(File.Exists(Path.Combine(pcsx2.EmulatorPath, "P1.png")));
+        Assert.False(File.Exists(Path.Combine(pcsx2.EmulatorPath, "P2.png")));
+        Assert.Equal(iniBefore, File.ReadAllBytes(pcsx2.IniPath));
+    }
+
+    [Fact]
+    public void DeployCrosshairs_pcsx2x6_honors_a_custom_relative_portable_data_root()
+    {
+        using var fixture = new TeknoParrotFixture();
+        var folder = fixture.CreateCrosshairsFolder();
+        fixture.WriteTestPng(folder, "Dot.png");
+        fixture.WriteTestPng(folder, "Cross.png");
+        fixture.Settings.CrosshairsPath = folder;
+
+        var pcsx2 = PreparePcsx2(fixture, portableRoot: "CustomData", initialized: true);
+        fixture.WriteLightgunProfile("Pcsx2Custom", Path.Combine(pcsx2.EmulatorPath, "pcsx2-qtx64.exe"), "Pcsx2x6");
+
+        var result = TeknoParrotProfileScanner.DeployCrosshairs(fixture.Settings, "Dot", "Cross", hideCursor: false, dryRun: false);
+
+        Assert.True(result.Success);
+        Assert.True(File.Exists(Path.Combine(pcsx2.DataRoot, "crosshairs", "P1.png")));
+        Assert.False(File.Exists(Path.Combine(pcsx2.EmulatorPath, "TeknoParrot", "crosshairs", "P1.png")));
+    }
+
+    [Fact]
+    public void DeployCrosshairs_pcsx2x6_does_not_write_before_first_run_initialization()
+    {
+        using var fixture = new TeknoParrotFixture();
+        var folder = fixture.CreateCrosshairsFolder();
+        fixture.WriteTestPng(folder, "Dot.png");
+        fixture.WriteTestPng(folder, "Cross.png");
+        fixture.Settings.CrosshairsPath = folder;
+
+        var pcsx2 = PreparePcsx2(fixture, portableRoot: "", initialized: false);
+        fixture.WriteLightgunProfile("Pcsx2Uninitialized", Path.Combine(pcsx2.EmulatorPath, "pcsx2-qtx64.exe"), "Pcsx2x6");
+        var logs = new List<string>();
+
+        var result = TeknoParrotProfileScanner.DeployCrosshairs(
+            fixture.Settings, "Dot", "Cross", hideCursor: false, dryRun: false, log: logs.Add);
+
+        Assert.True(result.Success);
+        Assert.Equal(0, result.Deployed);
+        Assert.Equal(1, result.Skipped);
+        Assert.False(Directory.Exists(Path.Combine(pcsx2.DataRoot, "crosshairs")));
+        Assert.Contains(logs, message => message.Contains("not initialized", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void DeployCrosshairs_pcsx2x6_rejects_a_portable_data_root_that_escapes_the_emulator_folder()
+    {
+        using var fixture = new TeknoParrotFixture();
+        var folder = fixture.CreateCrosshairsFolder();
+        fixture.WriteTestPng(folder, "Dot.png");
+        fixture.WriteTestPng(folder, "Cross.png");
+        fixture.Settings.CrosshairsPath = folder;
+
+        var pcsx2 = PreparePcsx2(fixture, portableRoot: Path.Combine("..", "OutsideData"), initialized: false);
+        fixture.WriteLightgunProfile("Pcsx2UnsafeRoot", Path.Combine(pcsx2.EmulatorPath, "pcsx2-qtx64.exe"), "Pcsx2x6");
+        var logs = new List<string>();
+
+        var result = TeknoParrotProfileScanner.DeployCrosshairs(
+            fixture.Settings, "Dot", "Cross", hideCursor: false, dryRun: false, log: logs.Add);
+
+        Assert.True(result.Success);
+        Assert.Equal(0, result.Deployed);
+        Assert.Equal(1, result.Skipped);
+        var outsideRoot = Path.GetFullPath(Path.Combine(pcsx2.EmulatorPath, "..", "OutsideData"));
+        Assert.False(Directory.Exists(Path.Combine(outsideRoot, "crosshairs")));
+        Assert.Contains(logs, message => message.Contains("outside", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void DeployCrosshairs_fails_cleanly_when_a_named_crosshair_does_not_exist()
     {
         using var fixture = new TeknoParrotFixture();
@@ -573,5 +663,24 @@ public class TeknoParrotProfileScannerTests
 
         var xml = File.ReadAllText(Path.Combine(fixture.UserProfilesPath, "HasCursorField.xml"));
         Assert.Contains("<FieldValue>1</FieldValue>", xml);
+    }
+
+    private static (string EmulatorPath, string DataRoot, string IniPath) PreparePcsx2(
+        TeknoParrotFixture fixture, string portableRoot, bool initialized)
+    {
+        var emulatorPath = Path.Combine(fixture.RootPath, "pcsx2x6");
+        Directory.CreateDirectory(emulatorPath);
+        File.WriteAllText(Path.Combine(emulatorPath, "pcsx2-qtx64.exe"), string.Empty);
+        File.WriteAllText(Path.Combine(emulatorPath, "portable.txt"), portableRoot);
+
+        var dataRoot = Path.Combine(emulatorPath, string.IsNullOrWhiteSpace(portableRoot) ? "TeknoParrot" : portableRoot);
+        var iniPath = Path.Combine(dataRoot, "inis", "PCSX2.ini");
+        if (initialized)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(iniPath)!);
+            File.WriteAllText(iniPath, "[USB1]\r\n[USB2]\r\n[JVS]\r\n[Other]\r\n");
+        }
+
+        return (emulatorPath, dataRoot, iniPath);
     }
 }
