@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.15.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.16.0
   Author: Jumpstile
 ===============================================================================
 
@@ -35,6 +35,7 @@
     AUTOSYNC
     BACKING UP AND RESTORING
     RELATIONSHIP TO TEKNOPARROT MANAGER
+    LICENSE AND DISTRIBUTION
     SAFETY
     GOOD TO KNOW
     CREDITS
@@ -330,8 +331,10 @@
     2. Pick a Player 1 design and a Player 2 design.
 
     3. Click "Deploy Crosshairs" to copy them to every registered lightgun
-       game. ElfLdr2 and PCSX2 games are handled as special cases since
-       they share one emulator folder between multiple games.
+       game. ElfLdr2 and PCSX2x6 are handled as shared-emulator special
+       cases. PCSX2x6 must already have completed its first-run setup; the
+       plugin places P1.png/P2.png under its resolved data folder and does
+       not change PCSX2.ini or launch the emulator.
 
     4. Optionally click "Hide Cursor" to hide the Windows mouse pointer
        during lightgun play.
@@ -628,6 +631,25 @@
 
   HyperHQ remains your launcher and library manager; this plugin exists to
   give it the structured TeknoParrot profile and import behavior it needs.
+
+-------------------------------------------------------------------------------
+  LICENSE AND DISTRIBUTION
+-------------------------------------------------------------------------------
+
+  This plugin uses the same source-available personal/non-commercial license
+  as TeknoParrot Manager. The complete terms are in the LICENSE file included
+  with this release ZIP.
+
+  The rights holder approves standalone distribution of the HyperSpin 2
+  plugin starting with v0.16.0 and later versions. It may be distributed
+  independently, but release packages must not bundle TeknoParrot Manager
+  source, assets, license files, or branding beyond factual compatibility
+  references.
+
+  This repository is a from-scratch C# implementation and does not copy or
+  bundle those manager materials. Third-party components remain subject to
+  their own licenses.
+
 
 
 -------------------------------------------------------------------------------

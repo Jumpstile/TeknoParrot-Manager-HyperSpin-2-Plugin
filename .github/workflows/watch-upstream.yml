@@ -3,8 +3,8 @@ name: Watch teknoparrot-manager for upstream changes
 # This repo is a from-scratch C# port of the PowerShell tool at
 # Jumpstile/teknoparrot-manager, not a fork -- there's no branch to merge
 # or rebase from. This workflow just watches that repo's main branch and
-# opens a tracking issue here when new commits land, so a human (or a
-# Claude session) can review and decide what's worth porting.
+# opens a tracking issue here when new commits land, so a maintainer can
+# review and decide what's worth porting.
 
 on:
   schedule:

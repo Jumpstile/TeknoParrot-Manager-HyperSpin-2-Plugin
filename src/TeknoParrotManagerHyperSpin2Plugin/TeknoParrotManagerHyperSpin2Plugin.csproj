@@ -7,6 +7,9 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <SelfContained>true</SelfContained>
+    <Version>0.16.0</Version>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>All</AnalysisMode>
     <AssemblyName>TeknoParrotManagerHyperSpin2Plugin</AssemblyName>
     <RootNamespace>TeknoParrotManagerHyperSpin2Plugin</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -38,7 +41,7 @@
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="10.0.9" />
     <PackageReference Include="System.Management" Version="10.0.9" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.9" />
   </ItemGroup>
 

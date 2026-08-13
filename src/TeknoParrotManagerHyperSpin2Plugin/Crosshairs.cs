@@ -6,7 +6,10 @@ using System.Xml.Linq;
 namespace TeknoParrotManagerHyperSpin2Plugin;
 
 // Phases 2 and 3 of ROADMAP.md: ports Invoke-CrosshairSetup, Export-CrosshairPreview,
-// Set-Pcsx2CursorPaths, and Invoke-CursorHideSetup from the original PowerShell tool.
+// and Invoke-CursorHideSetup from the original PowerShell tool. The PCSX2x6 path
+// also follows the RC3 ownership boundary: emulator-owned cursor settings are
+// read-only, while TPM-owned crosshair PNGs are written under the emulator's
+// resolved data root.
 // The 321 curated crosshair PNGs from the original tool are bundled in the
 // release package's Crosshairs/ folder next to the executable; the optional
 // crosshairsPath setting overrides this with a different folder if the user
@@ -148,83 +151,97 @@ public static partial class TeknoParrotProfileScanner
         }
     }
 
-    // Rewrites PCSX2.ini's cursor_path under [USB Port 1 guncon2] / [USB Port
-    // 2 guncon2], adding either section if it's missing. Backs up first --
-    // this is the user's PCSX2 emulator config, not a file this plugin
-    // created, so a bad parse should never leave them without their original
-    // settings.
-    private static bool SetPcsx2CursorPaths(string iniPath, string p1Path, string p2Path, bool dryRun, Action<string>? log)
+    // RC3's PCSX2x6 contract makes the emulator executable the presence
+    // detector, resolves its data root from portable.txt, and rejects any
+    // configured root that escapes the emulator folder. A missing or invalid
+    // portable.txt is therefore never allowed to redirect a write elsewhere.
+    private static string? ResolvePcsx2DataRoot(string pcsx2Dir, Action<string>? log)
     {
         try
         {
-            var lines = File.ReadAllLines(iniPath);
-            var output = new List<string>();
-            var targets = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            var executablePath = Path.Combine(pcsx2Dir, "pcsx2-qtx64.exe");
+            if (!File.Exists(executablePath))
             {
-                ["usb port 1 guncon2"] = p1Path,
-                ["usb port 2 guncon2"] = p2Path,
-            };
-            var done = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["usb port 1 guncon2"] = false,
-                ["usb port 2 guncon2"] = false,
-            };
-            var section = "";
+                log?.Invoke($"Crosshairs: Pcsx2x6 executable not found at {executablePath}");
+                return null;
+            }
 
-            foreach (var line in lines)
+            var dataRootName = "TeknoParrot";
+            var portablePath = Path.Combine(pcsx2Dir, "portable.txt");
+            if (File.Exists(portablePath))
+            {
+                var configuredRoot = File.ReadAllText(portablePath).Trim();
+                if (!string.IsNullOrWhiteSpace(configuredRoot))
+                {
+                    dataRootName = configuredRoot;
+                }
+            }
+
+            if (Path.IsPathRooted(dataRootName))
+            {
+                log?.Invoke($"Crosshairs: rejected rooted PCSX2 data root in {portablePath}");
+                return null;
+            }
+
+            var emulatorRoot = Path.GetFullPath(pcsx2Dir)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var resolvedRoot = Path.GetFullPath(Path.Combine(emulatorRoot, dataRootName));
+            var emulatorPrefix = emulatorRoot + Path.DirectorySeparatorChar;
+            if (!string.Equals(resolvedRoot, emulatorRoot, StringComparison.OrdinalIgnoreCase) &&
+                !resolvedRoot.StartsWith(emulatorPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                log?.Invoke($"Crosshairs: rejected PCSX2 data root outside {emulatorRoot}: {dataRootName}");
+                return null;
+            }
+
+            return resolvedRoot;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            log?.Invoke($"Crosshairs: could not resolve Pcsx2x6 data root -- {ex.Message}");
+            return null;
+        }
+    }
+
+    // The emulator owns PCSX2.ini. The plugin only needs to know that the
+    // first-run configuration has completed before placing TPM-owned PNGs.
+    // Missing or partial section markers are treated as unknown and fail
+    // closed; this plugin does not launch the emulator's first-run wizard.
+    private static bool IsPcsx2Initialized(string dataRoot, Action<string>? log)
+    {
+        var iniPath = Path.Combine(dataRoot, "inis", "PCSX2.ini");
+        if (!File.Exists(iniPath))
+        {
+            log?.Invoke($"Crosshairs: Pcsx2x6 is not initialized; PCSX2.ini was not found at {iniPath}");
+            return false;
+        }
+
+        try
+        {
+            var sections = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in File.ReadLines(iniPath))
             {
                 var trimmed = line.Trim();
-                if (trimmed.StartsWith('[') && trimmed.EndsWith(']'))
+                if (trimmed.StartsWith('[') && trimmed.EndsWith(']') && trimmed.Length > 2)
                 {
-                    if (targets.ContainsKey(section) && !done[section])
-                    {
-                        output.Add($"cursor_path = {targets[section]}");
-                        done[section] = true;
-                    }
-
-                    section = trimmed[1..^1].ToLowerInvariant();
-                    output.Add(line);
-                    continue;
+                    sections.Add(trimmed[1..^1].Trim());
                 }
-
-                if (trimmed.StartsWith("cursor_path", StringComparison.OrdinalIgnoreCase) &&
-                    trimmed.AsSpan("cursor_path".Length).TrimStart().StartsWith('=') &&
-                    targets.ContainsKey(section))
-                {
-                    output.Add($"cursor_path = {targets[section]}");
-                    done[section] = true;
-                    continue;
-                }
-
-                output.Add(line);
             }
 
-            if (targets.ContainsKey(section) && !done[section])
+            var missing = new[] { "USB1", "USB2", "JVS" }
+                .Where(section => !sections.Contains(section))
+                .ToArray();
+            if (missing.Length > 0)
             {
-                output.Add($"cursor_path = {targets[section]}");
-                done[section] = true;
+                log?.Invoke($"Crosshairs: Pcsx2x6 is not initialized; PCSX2.ini is missing sections: {string.Join(", ", missing)}");
+                return false;
             }
 
-            foreach (var target in done.Where(kv => !kv.Value).Select(kv => kv.Key).ToList())
-            {
-                output.Add(target == "usb port 1 guncon2" ? "[USB Port 1 guncon2]" : "[USB Port 2 guncon2]");
-                output.Add($"cursor_path = {targets[target]}");
-            }
-
-            if (dryRun)
-            {
-                return true;
-            }
-
-            var iniBackup = $"{iniPath}.bak_{DateTime.Now:yyyyMMdd_HHmmss}";
-            File.Copy(iniPath, iniBackup, overwrite: false);
-            File.WriteAllText(iniPath, string.Join("\r\n", output), new UTF8Encoding(false));
-            log?.Invoke($"Crosshairs: updated PCSX2.ini at {iniPath} (backup: {iniBackup})");
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            log?.Invoke($"Crosshairs: PCSX2.ini update failed -- {ex.Message}");
+            log?.Invoke($"Crosshairs: could not inspect PCSX2.ini -- {ex.Message}");
             return false;
         }
     }
@@ -233,8 +250,8 @@ public static partial class TeknoParrotProfileScanner
     // against crosshairsPath) to every registered lightgun (GunGame=true)
     // profile's game folder. ElfLdr2 and Pcsx2x6 lightgun games share one
     // emulator folder each and are deployed to once regardless of how many
-    // profiles use that emulator; Pcsx2x6 additionally updates PCSX2.ini's
-    // cursor_path. Optionally also hides the Windows cursor for every
+    // profiles use that emulator; Pcsx2x6 writes only TPM-owned PNGs beneath
+    // its resolved data root after verifying initialization. Optionally also hides the Windows cursor for every
     // lightgun profile (see HideCursorForLightgunGames).
     public static CrosshairDeploymentResult DeployCrosshairs(TeknoParrotSettings settings, string p1Name, string p2Name, bool hideCursor, bool dryRun, Action<string>? log = null)
     {
@@ -312,35 +329,35 @@ public static partial class TeknoParrotProfileScanner
                         pcsx2Dir ??= FindFolder(rootPath, Pcsx2FolderCandidates, name => name.StartsWith("pcsx2", StringComparison.OrdinalIgnoreCase));
                         if (pcsx2Dir is not null)
                         {
-                            var p1Dest = Path.Combine(pcsx2Dir, "P1.png");
-                            var p2Dest = Path.Combine(pcsx2Dir, "P2.png");
-                            if (!dryRun)
+                            var dataRoot = ResolvePcsx2DataRoot(pcsx2Dir, log);
+                            if (dataRoot is not null && IsPcsx2Initialized(dataRoot, log))
                             {
-                                File.Copy(p1Path, p1Dest, overwrite: true);
-                                File.Copy(p2Path, p2Dest, overwrite: true);
-                            }
+                                var crosshairsRoot = Path.Combine(dataRoot, "crosshairs");
+                                var p1Dest = Path.Combine(crosshairsRoot, "P1.png");
+                                var p2Dest = Path.Combine(crosshairsRoot, "P2.png");
+                                if (!dryRun)
+                                {
+                                    Directory.CreateDirectory(crosshairsRoot);
+                                    File.Copy(p1Path, p1Dest, overwrite: true);
+                                    File.Copy(p2Path, p2Dest, overwrite: true);
+                                }
 
-                            var iniPath = Path.Combine(pcsx2Dir, "inis", "PCSX2.ini");
-                            if (File.Exists(iniPath))
-                            {
-                                SetPcsx2CursorPaths(iniPath, p1Dest, p2Dest, dryRun, log);
+                                log?.Invoke($"Crosshairs: deployed Pcsx2x6 crosshairs to {crosshairsRoot}");
+                                deployed++;
                             }
                             else
                             {
-                                log?.Invoke($"Crosshairs: Pcsx2x6 PCSX2.ini not found at {iniPath}");
+                                skipped++;
                             }
-
-                            log?.Invoke($"Crosshairs: deployed to Pcsx2x6 folder {pcsx2Dir}");
                         }
                         else
                         {
                             log?.Invoke($"Crosshairs: Pcsx2x6 folder not found in {rootPath}");
+                            skipped++;
                         }
 
                         pcsx2Deployed = true;
                     }
-
-                    deployed++;
                     continue;
                 }
 

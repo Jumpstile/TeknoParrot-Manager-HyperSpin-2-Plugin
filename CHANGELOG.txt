@@ -7,6 +7,28 @@
 
 
 -------------------------------------------------------------------------------
+  v0.16.0
+-------------------------------------------------------------------------------
+
+  RC3 PCSX2x6 compatibility: crosshair deployment now waits until PCSX2
+  has completed its first-run setup, resolves the emulator data folder safely,
+  and places P1.png/P2.png in the plugin-owned crosshairs folder. It no longer
+  edits PCSX2.ini or writes files beside the emulator executable. Unsafe or
+  incomplete data-root settings stop without changing anything.
+
+  Rights-holder approval is recorded for standalone distribution of v0.16.0
+  and later. The matching TeknoParrot Manager source-available
+  personal/non-commercial LICENSE is included in the repository and release
+  package. Standalone packages must not bundle TeknoParrot Manager source,
+  assets, license files, or branding beyond factual compatibility references.
+
+  Updated the XML security package to 10.0.10; the live vulnerability check reports
+  no vulnerable packages.
+
+  Added regression tests and an evidence record covering the RC3 applicability
+  review and the ownership boundary.
+
+-------------------------------------------------------------------------------
   v0.15.0
 -------------------------------------------------------------------------------
 
