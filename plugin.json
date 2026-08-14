@@ -1,7 +1,7 @@
 {
   "id": "teknoparrot-manager-hyperspin2-plugin",
   "name": "TeknoParrot Manager - HyperSpin 2 Plugin",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "changelog": "CHANGELOG.txt",
   "author": "Jumpstile",
   "type": "executable",
@@ -260,6 +260,14 @@
       "label": "Health Check",
       "description": "Check that everything is set up correctly.",
       "icon": "shield-check",
+      "type": "secondary",
+      "confirmation": false
+    },
+    {
+      "id": "check_profile_schema_drift",
+      "label": "Check Profile Schema Drift",
+      "description": "Read-only check for new or unrecognized TeknoParrot profile fields. Unknown fields are reported and never changed.",
+      "icon": "search",
       "type": "secondary",
       "confirmation": false
     },

@@ -7,6 +7,23 @@
 
 
 -------------------------------------------------------------------------------
+  v0.16.1
+-------------------------------------------------------------------------------
+
+  Ported the applicable TeknoParrot Manager RC4 safety changes. AutoSync now
+  refuses overlapping source and install folders and checks each ZIP again
+  immediately before extraction.
+
+  FFB Blaster setup now treats PCSX2x6 as unsupported and leaves malformed or
+  unfamiliar FFB fields alone instead of guessing at a changed profile schema.
+
+  Added the read-only "Check Profile Schema Drift" action. It reports new or
+  unrecognized GameProfile fields using the RC4 baseline and never changes the
+  profiles it examines.
+
+  Added regression tests for these safety and schema-drift cases.
+
+-------------------------------------------------------------------------------
   v0.16.0
 -------------------------------------------------------------------------------
 

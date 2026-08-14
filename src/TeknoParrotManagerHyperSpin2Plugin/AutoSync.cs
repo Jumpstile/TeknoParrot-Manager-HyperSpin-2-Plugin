@@ -137,6 +137,28 @@ public static partial class TeknoParrotProfileScanner
         File.Move(tempPath, syncStatePath);
     }
 
+    // RC4 safety boundary: the source ZIPs and install/staging folder must be
+    // disjoint. Revalidate this at the operation boundary, not only in UI
+    // callers, because AutoSync can also run from a DB-connect event.
+    public static string? ValidateAutoSyncSourceBoundary(string zipSourceDir, string installFolder)
+    {
+        try
+        {
+            var source = Path.GetFullPath(zipSourceDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var install = Path.GetFullPath(installFolder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (string.Equals(source, install, StringComparison.OrdinalIgnoreCase) ||
+                IsPathInside(source, install) || IsPathInside(install, source))
+            {
+                return $"The ZIP source and staging folder overlap. Keep them separate: ZIP source '{source}', staging folder '{install}'.";
+            }
+            return null;
+        }
+        catch (Exception ex) when (ex is ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            return $"The ZIP source or staging folder path is invalid: {ex.Message}";
+        }
+    }
+
     // Extracts game ZIPs from zipSourceDir into installFolder, skipping
     // games already extracted and up to date. Mirrors Invoke-AutoSync.
     // Never deletes a local game folder unless it is about to immediately
@@ -156,6 +178,13 @@ public static partial class TeknoParrotProfileScanner
         if (!Directory.Exists(zipSourceDir))
         {
             return new AutoSyncResult(synced, failed, upToDate, skipped, wouldSync, "The configured source folder does not exist.");
+        }
+
+        var boundaryError = ValidateAutoSyncSourceBoundary(zipSourceDir, installFolder);
+        if (boundaryError is not null)
+        {
+            log?.Invoke($"AutoSync: SECURITY -- {boundaryError}");
+            return new AutoSyncResult(synced, failed, upToDate, skipped, wouldSync, boundaryError);
         }
 
         var zipFiles = Directory.GetFiles(zipSourceDir, "*.zip", SearchOption.TopDirectoryOnly);
@@ -179,6 +208,13 @@ public static partial class TeknoParrotProfileScanner
 
         foreach (var zipPath in zipFiles)
         {
+            if (!File.Exists(zipPath) || !IsPathInside(zipPath, zipSourceDir))
+            {
+                skipped++;
+                log?.Invoke($"AutoSync: skipped ZIP no longer present inside the configured source: {zipPath}");
+                continue;
+            }
+
             var rawName = Path.GetFileNameWithoutExtension(zipPath);
 
             if (skipSet is not null && skipSet.Contains(rawName))
@@ -264,6 +300,12 @@ public static partial class TeknoParrotProfileScanner
 
             try
             {
+                if (!File.Exists(zipPath) || !IsPathInside(zipPath, zipSourceDir))
+                {
+                    skipped++;
+                    log?.Invoke($"AutoSync: source ZIP changed before extraction; skipped '{rawName}'.");
+                    continue;
+                }
                 File.WriteAllText(sentinel, string.Empty, new System.Text.UTF8Encoding(false));
                 try
                 {

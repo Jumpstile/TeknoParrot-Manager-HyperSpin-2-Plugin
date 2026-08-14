@@ -126,3 +126,14 @@ test commands are run.
 - [Issue #24](https://github.com/Jumpstile/TeknoParrot-Manager-HyperSpin-2-Plugin/issues/24) tracks the code task with `upstream-sync`, `type:enhancement`, `priority:high`, `component:profiles`, `component:export`, and `status:ready`.
 - [Issue #25](https://github.com/Jumpstile/TeknoParrot-Manager-HyperSpin-2-Plugin/issues/25) records the rights-holder approval for standalone distribution with `upstream-sync`, `type:investigation`, `priority:high`, `component:release`, and `status:ready`.
 - Issues #24 and #25 both relate back to #23; neither is represented as completed by the closure of the review issue.
+
+
+## RC4 follow-up (2026-08-13)
+
+The upstream manager released `v1.0-RC4` at commit `6fddd9257455285df9735920fb86fa4052e30bb7`. The applicable changes for this HyperSpin-only plugin are safety and schema diagnostics, not the standalone manager's first-run presentation or unrelated launcher workflows.
+
+- AutoSync now rejects source/install overlap and revalidates each ZIP immediately before destructive extraction.
+- FFB Blaster setup fails closed for the unsupported `pcsx2x6` platform and for FFB-shaped fields whose schema is not a recognized writable Bool.
+- `check_profile_schema_drift` provides a read-only profile scan using the expanded RC4 known-element and FieldType baseline; unknown fields are reported and never rewritten.
+- RC4 beginner-facing recap text and first-run welcome flow remain manager-specific and were not copied into HyperHQ.
+- The port is staged as plugin v0.16.1 on the dedicated branch; release publication remains a separate gate.

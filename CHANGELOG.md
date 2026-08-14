@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.16.1
+
+- Port the applicable TeknoParrot Manager RC4 hardening into the HyperSpin 2
+  plugin. AutoSync now rejects overlapping source/install folders and
+  revalidates each ZIP immediately before extraction so a changed or moved
+  source cannot be treated as trusted.
+- Harden FFB Blaster setup against schema drift. PCSX2x6 is reported as
+  unsupported, malformed FFB-shaped fields are reported as unknown, and only
+  a recognized writable Bool field is changed.
+- Add the read-only `check_profile_schema_drift` action. It recognizes the
+  expanded RC4 GameProfile element and FieldType baseline, reports unknown
+  fields without modifying profiles, and provides a safe diagnostic path when
+  TeknoParrot changes its profile schema again.
+- Add regression coverage for source-boundary checks, source revalidation,
+  FFB platform/schema handling, and known/unknown profile schema fields.
 ## 0.16.0
 
 - Reconcile the RC3 PCSX2x6 crosshair behavior with the manager's ownership

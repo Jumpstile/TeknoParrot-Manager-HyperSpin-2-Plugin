@@ -25,6 +25,7 @@ public class PluginManifestTests
 
         Assert.Contains("run_setup_wizard", actions);
         Assert.Contains("health_check", actions);
+        Assert.Contains("check_profile_schema_drift", actions);
         Assert.Contains("scan_profiles", actions);
         Assert.Contains("preview_registration", actions);
         Assert.Contains("register_games", actions);

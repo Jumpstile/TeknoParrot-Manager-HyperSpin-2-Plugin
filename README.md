@@ -50,6 +50,7 @@ decide what's worth porting. See ROADMAP.md for what's already ported.
 - Sets up force feedback (`preview_ffb_blaster_setup` / `apply_ffb_blaster_setup` for TeknoParrot's own FFB Blaster, `preview_ffb_plugin_setup` / `apply_ffb_plugin_setup` for the free, open-source FFB Arcade Plugin covering a different game set). A game covered by both prefers native FFB Blaster by default.
 - Installs PostgreSQL 8.3 (`apply_postgres_install`, self-elevated for that one step) and configures/backs up/restores per-game databases (`preview_postgres_game_setup` / `apply_postgres_game_setup` / `backup_postgres_databases` / `restore_postgres_backup`) for the small number of older titles that need it. Windows only.
 - Extracts game ZIPs from a configured source folder -- a NAS share or local staging drive -- into your Games Folder (`preview_autosync` / `apply_autosync`), skipping anything already extracted and up to date. Supports an optional second "supplementary" source folder synced the same way. See AutoSync's own section below.
+- Provides a read-only `check_profile_schema_drift` action that compares GameProfiles with the RC4-known schema and reports unfamiliar elements or field types without changing them. FFB Blaster setup also fails closed for unsupported PCSX2x6 profiles and unfamiliar FFB-shaped fields.
 - Backs up and restores profile XML files, including a pre-restore backup before overwrite.
 - Creates and syncs the canonical HyperHQ system `Arcade (TeknoParrot)`.
 - Imports TeknoParrot profile XML files as launchable HyperHQ games.

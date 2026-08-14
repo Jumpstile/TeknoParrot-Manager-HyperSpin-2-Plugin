@@ -212,4 +212,38 @@ public class FfbBlasterTests
         Assert.Equal(1, result.Updated);
         Assert.Equal(original, File.ReadAllText(profilePath));
     }
-}
+    [Fact]
+    public void EvaluateFfbBlaster_rejects_pcsx2x6_even_when_a_matching_field_is_present()
+    {
+        var doc = XDocument.Parse("""
+            <GameProfile>
+              <EmulationProfile>pcsx2x6</EmulationProfile>
+              <ConfigValues><FieldInformation>
+                <CategoryName>FFB Blaster</CategoryName><FieldName>EnableFfb</FieldName>
+                <FieldType>Bool</FieldType><FieldValue>0</FieldValue>
+              </FieldInformation></ConfigValues>
+            </GameProfile>
+            """);
+
+        var result = TeknoParrotProfileScanner.EvaluateFfbBlaster(doc, new[] { "FFB Blaster" });
+
+        Assert.Equal("Unsupported", result.Status);
+        Assert.False(result.Eligible);
+        Assert.Empty(result.Changes);
+    }
+
+    [Fact]
+    public void EvaluateFfbBlaster_fails_closed_on_an_unknown_matching_field_shape()
+    {
+        var doc = XDocument.Parse("""
+            <GameProfile><ConfigValues><FieldInformation>
+              <CategoryName>FFB Blaster</CategoryName><FieldName>EnableFfb</FieldName>
+              <FieldType>Dropdown</FieldType><FieldValue>0</FieldValue>
+            </FieldInformation></ConfigValues></GameProfile>
+            """);
+
+        var result = TeknoParrotProfileScanner.EvaluateFfbBlaster(doc, new[] { "FFB Blaster" });
+
+        Assert.Equal("Unknown", result.Status);
+        Assert.Empty(result.Changes);
+    }}

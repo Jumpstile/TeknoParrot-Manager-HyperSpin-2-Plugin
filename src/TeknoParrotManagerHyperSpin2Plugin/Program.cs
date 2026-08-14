@@ -16,7 +16,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
 {
     internal const string PluginId = "teknoparrot-manager-hyperspin2-plugin";
     internal const string PluginName = "TeknoParrot Manager - HyperSpin 2 Plugin";
-    internal const string PluginVersion = "0.16.0";
+    internal const string PluginVersion = "0.16.1";
     internal const string WizardId = "teknoparrot-manager-hyperspin2-plugin-setup";
     internal const string TeknoParrotSystemName = "Arcade (TeknoParrot)";
     internal const string TeknoParrotSystemReferenceId = "97d957bb-1490-4c1f-b698-08dd285234a8";
@@ -841,6 +841,13 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
         return result with { BackupPath = backup?.BackupPath };
     }
 
+    private static object CheckProfileSchemaDrift(JsonElement data)
+    {
+        settings = MergeSettings(settings, data);
+        var gameProfilesPath = TeknoParrotProfileScanner.ResolveGameProfilesPathForSettings(settings);
+        var result = TeknoParrotProfileScanner.CheckProfileSchemaDrift(gameProfilesPath, LogAsyncSink);
+        return new { success = true, result };
+    }
     private static async Task<object> Execute(JsonElement data)
     {
         var action = GetString(data, "action") ?? "get_status";
@@ -853,6 +860,7 @@ public static class TeknoParrotManagerHyperSpin2PluginMain
             "scan_profiles" => BuildScanResponse(TeknoParrotProfileScanner.Scan(settings)),
             "scan_games" => BuildScanResponse(TeknoParrotProfileScanner.Scan(settings)),
             "health_check" => BuildScanResponse(TeknoParrotProfileScanner.Scan(settings)),
+            "check_profile_schema_drift" => CheckProfileSchemaDrift(data),
             "get_status" => await GetStatus(),
             "status" => await GetStatus(),
             "preview_registration" => await PreviewRegisterGames(data),
