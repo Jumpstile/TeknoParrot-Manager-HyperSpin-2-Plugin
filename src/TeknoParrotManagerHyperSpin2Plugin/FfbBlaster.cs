@@ -17,6 +17,7 @@ namespace TeknoParrotManagerHyperSpin2Plugin;
 public static partial class TeknoParrotProfileScanner
 {
     private static readonly Regex FfbBlasterFieldPattern = new(@"ffb.*blaster|blaster.*ffb", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly HashSet<string> UnsupportedFfbBlasterPlatforms = new(StringComparer.OrdinalIgnoreCase) { "pcsx2x6" };
 
     // Discovers the FFB Blaster field's identifying key by scanning
     // TeknoParrot GameProfiles at runtime -- never hardcoded. Newer
@@ -90,14 +91,34 @@ public static partial class TeknoParrotProfileScanner
             .Where(fi => string.Equals(ChildByLocalName(fi, "FieldName")?.Value.Trim(), key, StringComparison.OrdinalIgnoreCase));
     }
 
-    // Pure decision function: for a given profile and the field keys
-    // DiscoverFfbBlasterFieldNames found, determines whether the profile
-    // has an FFB Blaster field at all (Eligible) and whether it is already
-    // set to "1" (UpToDate). Mirrors Test-FFBBlasterUpToDate.
+    // Pure decision function with the RC4 capability gate. Only Supported
+    // profiles may be changed; Unsupported and Unknown are fail-closed.
     public static FfbBlasterEvaluation EvaluateFfbBlaster(XDocument doc, IReadOnlyCollection<string> categories)
     {
+        var platform = ChildByLocalName(doc.Root, "EmulationProfile")?.Value.Trim();
+        if (string.IsNullOrWhiteSpace(platform))
+        {
+            platform = ChildByLocalName(doc.Root, "EmulatorType")?.Value.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(platform) && UnsupportedFfbBlasterPlatforms.Contains(platform))
+        {
+            return new FfbBlasterEvaluation(false, false, Array.Empty<GpuFixChange>(), "Unsupported", $"FFB Blaster is not supported on the '{platform}' platform.");
+        }
+
         var eligible = false;
         var changes = new List<GpuFixChange>();
+        var shaped = false;
+        var configValues = ChildByLocalName(doc.Root, "ConfigValues");
+        foreach (var fieldInfo in ChildrenByLocalName(configValues, "FieldInformation"))
+        {
+            var category = ChildByLocalName(fieldInfo, "CategoryName")?.Value.Trim() ?? string.Empty;
+            var fieldNameValue = ChildByLocalName(fieldInfo, "FieldName")?.Value.Trim() ?? string.Empty;
+            if (FfbBlasterFieldPattern.IsMatch(category) || FfbBlasterFieldPattern.IsMatch(fieldNameValue))
+            {
+                shaped = true;
+            }
+        }
 
         foreach (var key in categories)
         {
@@ -124,7 +145,13 @@ public static partial class TeknoParrotProfileScanner
             }
         }
 
-        return new FfbBlasterEvaluation(eligible, eligible && changes.Count == 0, changes);
+        if (eligible)
+        {
+            return new FfbBlasterEvaluation(true, changes.Count == 0, changes, "Supported", "A writable FFB Blaster Bool field was found.");
+        }
+
+        return new FfbBlasterEvaluation(false, false, Array.Empty<GpuFixChange>(), shaped ? "Unknown" : "Unsupported",
+            shaped ? "An FFB Blaster-like field does not match the known Bool schema; skipped." : "This profile has no FFB Blaster field.");
     }
 
     // Applies (or, with dryRun, just previews) the FFB Blaster field across
@@ -147,6 +174,8 @@ public static partial class TeknoParrotProfileScanner
         var errors = new List<string>();
         var unchanged = 0;
         var noField = 0;
+        var unsupported = 0;
+        var unknown = 0;
 
         if (fields.Count > 0 && !string.IsNullOrWhiteSpace(userProfilesPath) && Directory.Exists(userProfilesPath))
         {
@@ -157,9 +186,18 @@ public static partial class TeknoParrotProfileScanner
                 {
                     var doc = XDocument.Load(file);
                     var evaluation = EvaluateFfbBlaster(doc, fields);
-                    if (!evaluation.Eligible)
+                    if (evaluation.Status == "Unsupported")
                     {
                         noField++;
+                        unsupported++;
+                        log?.Invoke($"FfbBlaster: {code} :: unsupported -- {evaluation.Reason}");
+                        continue;
+                    }
+
+                    if (evaluation.Status == "Unknown")
+                    {
+                        unknown++;
+                        log?.Invoke($"FfbBlaster: {code} :: unknown -- {evaluation.Reason}");
                         continue;
                     }
 
@@ -198,16 +236,18 @@ public static partial class TeknoParrotProfileScanner
             }
         }
 
-        return new FfbBlasterResult(updated.Count, unchanged, noField, errors.Count, updated, errors);
+        return new FfbBlasterResult(updated.Count, unchanged, noField, unsupported, unknown, errors.Count, updated, errors);
     }
 }
 
-public sealed record FfbBlasterEvaluation(bool Eligible, bool UpToDate, IReadOnlyList<GpuFixChange> Changes);
+public sealed record FfbBlasterEvaluation(bool Eligible, bool UpToDate, IReadOnlyList<GpuFixChange> Changes, string Status = "Unsupported", string Reason = "");
 
 public sealed record FfbBlasterResult(
     [property: JsonPropertyName("updated")] int Updated,
     [property: JsonPropertyName("unchanged")] int Unchanged,
     [property: JsonPropertyName("no_field")] int NoField,
+    [property: JsonPropertyName("unsupported")] int Unsupported,
+    [property: JsonPropertyName("unknown")] int Unknown,
     [property: JsonPropertyName("errors")] int Errors,
     [property: JsonPropertyName("updated_profiles")] IReadOnlyList<string> UpdatedProfiles,
     [property: JsonPropertyName("error_profiles")] IReadOnlyList<string> ErrorProfiles);

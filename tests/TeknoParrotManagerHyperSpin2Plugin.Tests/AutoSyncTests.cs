@@ -257,6 +257,36 @@ public class AutoSyncTests
         Assert.Empty(result.SyncedGames);
     }
 
+    [Fact]
+    public void RunAutoSync_rejects_a_source_folder_that_overlaps_the_install_folder()
+    {
+        using var fixture = new TeknoParrotFixture();
+        var installFolder = Path.Combine(fixture.RootPath, "Games");
+        var zipSource = Path.Combine(installFolder, "OriginalZips");
+        Directory.CreateDirectory(zipSource);
+        CreateZip(zipSource, "Unsafe Game");
+
+        var result = TeknoParrotProfileScanner.RunAutoSync(
+            zipSource, installFolder, Path.Combine(installFolder, "state.json"), null, null,
+            dryRun: false, null, fixture.UserProfilesPath);
+
+        Assert.Empty(result.SyncedGames);
+        Assert.Contains("overlap", result.Note, StringComparison.OrdinalIgnoreCase);
+        Assert.False(Directory.Exists(Path.Combine(installFolder, "Unsafe Game")));
+    }
+
+    [Fact]
+    public void ValidateAutoSyncSourceBoundary_rejects_install_folder_inside_source_folder()
+    {
+        using var fixture = new TeknoParrotFixture();
+        var source = Path.Combine(fixture.RootPath, "Source");
+        var install = Path.Combine(source, "Staging");
+        Directory.CreateDirectory(install);
+
+        var error = TeknoParrotProfileScanner.ValidateAutoSyncSourceBoundary(source, install);
+
+        Assert.Contains("overlap", error, StringComparison.OrdinalIgnoreCase);
+    }
     // -- RunAutoSyncBothSources ---------------------------------------------
 
     [Fact]

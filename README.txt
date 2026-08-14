@@ -1,5 +1,5 @@
 ===============================================================================
-  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.16.0
+  TeknoParrot Manager - HyperSpin 2 Plugin  |  v0.16.1
   Author: Jumpstile
 ===============================================================================
 
@@ -32,7 +32,15 @@
     BEPINEX UPDATE CHECK
     FORCE FEEDBACK SETUP
     POSTGRESQL SETUP
-    AUTOSYNC
+    PROFILE SCHEMA CHECK
+  -------------------------------------------------------------------------------
+
+    Use the "Check Profile Schema Drift" action when TeknoParrot has been
+    updated. It reports new or unfamiliar GameProfile fields using the RC4
+    baseline and never changes the profiles it examines. FFB Blaster also
+    leaves unsupported PCSX2x6 profiles and unfamiliar FFB fields alone.
+
+  AUTOSYNC
     BACKING UP AND RESTORING
     RELATIONSHIP TO TEKNOPARROT MANAGER
     LICENSE AND DISTRIBUTION
@@ -553,6 +561,14 @@
 
 
 -------------------------------------------------------------------------------
+  PROFILE SCHEMA CHECK
+  -------------------------------------------------------------------------------
+
+    Use the "Check Profile Schema Drift" action when TeknoParrot has been
+    updated. It reports new or unfamiliar GameProfile fields using the RC4
+    baseline and never changes the profiles it examines. FFB Blaster also
+    leaves unsupported PCSX2x6 profiles and unfamiliar FFB fields alone.
+
   AUTOSYNC
 -------------------------------------------------------------------------------
 
